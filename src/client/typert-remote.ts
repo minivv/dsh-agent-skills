@@ -10,6 +10,7 @@ import {
   addDirInputSchema,
   agentSkillsViewSchema,
   presetTakeoverStatusSchema,
+  restartResultSchema,
   removeDirInputSchema,
   toggleDirInputSchema,
   toggleSkillInputSchema
@@ -56,6 +57,24 @@ export const TYPERT_REMOTE = {
       invocation: direct,
       parameters: [],
       result: result("PresetTakeoverStatus", presetTakeoverStatusSchema)
+    },
+    {
+      id: `${PKG}#agentSkills/disableTakeover`,
+      service: "agentSkills",
+      namespace: "agentSkills",
+      method: "disableTakeover",
+      invocation: direct,
+      parameters: [],
+      result: result("PresetTakeoverStatus", presetTakeoverStatusSchema)
+    },
+    {
+      id: `${PKG}#agentSkills/restartDsh`,
+      service: "agentSkills",
+      namespace: "agentSkills",
+      method: "restartDsh",
+      invocation: direct,
+      parameters: [],
+      result: result("RestartResult", restartResultSchema)
     },
     {
       id: `${PKG}#agentSkills/toggleSkill`,
@@ -141,6 +160,8 @@ export interface AgentSkillsApi {
   list(): Promise<RemoteResult<import("../schemas.js").AgentSkillsView>>;
   takeoverStatus(): Promise<RemoteResult<import("../schemas.js").PresetTakeoverStatus>>;
   enableTakeover(): Promise<RemoteResult<import("../schemas.js").PresetTakeoverStatus>>;
+  disableTakeover(): Promise<RemoteResult<import("../schemas.js").PresetTakeoverStatus>>;
+  restartDsh(): Promise<RemoteResult<import("../schemas.js").RestartResult>>;
   toggleSkill(input: import("../schemas.js").ToggleSkillInput): Promise<RemoteResult<import("../schemas.js").AgentSkillsView>>;
   toggleDir(input: import("../schemas.js").ToggleDirInput): Promise<RemoteResult<import("../schemas.js").AgentSkillsView>>;
   addDir(input: import("../schemas.js").AddDirInput): Promise<RemoteResult<import("../schemas.js").AgentSkillsView>>;

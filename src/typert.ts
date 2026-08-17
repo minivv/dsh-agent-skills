@@ -11,6 +11,7 @@ import {
   addDirInputSchema,
   agentSkillsViewSchema,
   presetTakeoverStatusSchema,
+  restartResultSchema,
   removeDirInputSchema,
   toggleDirInputSchema,
   toggleSkillInputSchema
@@ -42,6 +43,8 @@ export const TYPERT = {
           { name: "list", kind: "method", signature: "(): Promise<AgentSkillsView>" },
           { name: "takeoverStatus", kind: "method", signature: "(): Promise<PresetTakeoverStatus>" },
           { name: "enableTakeover", kind: "method", signature: "(): Promise<PresetTakeoverStatus>" },
+          { name: "disableTakeover", kind: "method", signature: "(): Promise<PresetTakeoverStatus>" },
+          { name: "restartDsh", kind: "method", signature: "(): Promise<RestartResult>" },
           { name: "toggleSkill", kind: "method", signature: "(input: ToggleSkillInput): Promise<AgentSkillsView>" },
           { name: "toggleDir", kind: "method", signature: "(input: ToggleDirInput): Promise<AgentSkillsView>" },
           { name: "addDir", kind: "method", signature: "(input: AddDirInput): Promise<AgentSkillsView>" },
@@ -71,7 +74,11 @@ export const TYPERT = {
           {
             name: "PresetTakeoverStatus",
             declaration:
-              "export interface PresetTakeoverStatus { available: boolean; enabled: boolean; configured: number; total: number; }"
+              "export interface PresetTakeoverStatus { available: boolean; enabled: boolean; configured: number; total: number; boot?: string; }"
+          },
+          {
+            name: "RestartResult",
+            declaration: "export interface RestartResult { scheduled: true; }"
           },
           {
             name: "ToggleSkillInput",
@@ -122,6 +129,24 @@ export const TYPERT = {
       invocation: direct,
       parameters: [],
       result: result("PresetTakeoverStatus", presetTakeoverStatusSchema)
+    },
+    {
+      id: `${PKG}#agentSkills/disableTakeover`,
+      service: "agentSkills",
+      namespace: "agentSkills",
+      method: "disableTakeover",
+      invocation: direct,
+      parameters: [],
+      result: result("PresetTakeoverStatus", presetTakeoverStatusSchema)
+    },
+    {
+      id: `${PKG}#agentSkills/restartDsh`,
+      service: "agentSkills",
+      namespace: "agentSkills",
+      method: "restartDsh",
+      invocation: direct,
+      parameters: [],
+      result: result("RestartResult", restartResultSchema)
     },
     {
       id: `${PKG}#agentSkills/toggleSkill`,

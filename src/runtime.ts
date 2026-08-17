@@ -10,15 +10,21 @@ import { readState, writeState } from "./store.js";
 import { buildView, ensureDiscovered, canonicalizeDir } from "./views.js";
 import { invalidateSkillCache } from "./registry.js";
 import { resolveDshHome } from "@deepseek-ai/dsh-home-paths";
-import { enablePresetTakeover, inspectPresetTakeover } from "./preset-manager.js";
+import { randomUUID } from "node:crypto";
+import { disablePresetTakeover, enablePresetTakeover, inspectPresetTakeover } from "./preset-manager.js";
+import { scheduleDshRestart } from "./restart.js";
 import type {
   AgentSkillsView,
   AddDirInput,
   PresetTakeoverStatus,
+  RestartResult,
   RemoveDirInput,
   ToggleDirInput,
   ToggleSkillInput
 } from "./schemas.js";
+
+const BOOT_ID = randomUUID();
+let restartScheduled = false;
 
 /** Strip undefined recursively so the strict wire codec always passes. */
 function jsonSafe<T>(value: T): T {
@@ -48,13 +54,32 @@ export class AgentSkillsRuntime extends TypertRemoteService {
   /** Read the one-click DSH preset takeover status without exposing local paths. */
   @Remote
   async takeoverStatus(): Promise<PresetTakeoverStatus> {
-    return inspectPresetTakeover();
+    return { ...inspectPresetTakeover(), boot: BOOT_ID };
   }
 
   /** User-triggered, idempotent installation of the preset-scoped provider row. */
   @Remote
   async enableTakeover(): Promise<PresetTakeoverStatus> {
-    return enablePresetTakeover();
+    return { ...enablePresetTakeover(), boot: BOOT_ID };
+  }
+
+  /** Restore the official filesystem provider in the shipped presets. */
+  @Remote
+  async disableTakeover(): Promise<PresetTakeoverStatus> {
+    return { ...disablePresetTakeover(), boot: BOOT_ID };
+  }
+
+  /** Restart the current DSH web host so a preset provider change is mounted. */
+  @Remote
+  async restartDsh(): Promise<RestartResult> {
+    if (restartScheduled) throw new Error("DSH 重启已在进行中");
+    restartScheduled = true;
+    try {
+      return scheduleDshRestart();
+    } catch (error) {
+      restartScheduled = false;
+      throw error;
+    }
   }
 
   /** Enable or disable one skill by name. */

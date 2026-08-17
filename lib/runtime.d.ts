@@ -6,7 +6,7 @@
  * @module dsh-agent-skills/runtime
  */
 import { TypertRemoteService } from "@deepseek-ai/dsh-typert-protocol";
-import type { AgentSkillsView, AddDirInput, PresetTakeoverStatus, RemoveDirInput, ToggleDirInput, ToggleSkillInput } from "./schemas.js";
+import type { AgentSkillsView, AddDirInput, PresetTakeoverStatus, RestartResult, RemoveDirInput, ToggleDirInput, ToggleSkillInput } from "./schemas.js";
 /** The host service behind the `agentSkills` typert namespace. */
 export declare class AgentSkillsRuntime extends TypertRemoteService {
     constructor(ctx: import("@deepseek-ai/cordis").Context);
@@ -16,6 +16,10 @@ export declare class AgentSkillsRuntime extends TypertRemoteService {
     takeoverStatus(): Promise<PresetTakeoverStatus>;
     /** User-triggered, idempotent installation of the preset-scoped provider row. */
     enableTakeover(): Promise<PresetTakeoverStatus>;
+    /** Restore the official filesystem provider in the shipped presets. */
+    disableTakeover(): Promise<PresetTakeoverStatus>;
+    /** Restart the current DSH web host so a preset provider change is mounted. */
+    restartDsh(): Promise<RestartResult>;
     /** Enable or disable one skill by name. */
     toggleSkill(input: ToggleSkillInput): Promise<AgentSkillsView>;
     /** Enable or disable one scan directory (custom or builtin root). */

@@ -79,9 +79,17 @@ export const presetTakeoverStatusSchema = z.object({
   /** Number of preset files that already contain the managed row. */
   configured: z.number().int().min(0),
   /** Number of supported preset files found in this DSH installation. */
-  total: z.number().int().min(0)
+  total: z.number().int().min(0),
+  /** Identifies the running DSH process; changes after a successful restart. */
+  boot: z.string().optional()
 });
 export type PresetTakeoverStatus = z.infer<typeof presetTakeoverStatusSchema>;
+
+/** A restart request accepted by the host. */
+export const restartResultSchema = z.object({
+  scheduled: z.literal(true)
+});
+export type RestartResult = z.infer<typeof restartResultSchema>;
 
 /** Input for toggling one skill. */
 export const toggleSkillInputSchema = z.object({

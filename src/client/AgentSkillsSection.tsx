@@ -22,6 +22,35 @@ import type { TranslateNS } from "@deepseek-ai/dsh-client-ui-slots";
 type T = TranslateNS<"agent-skills">;
 
 const clamp = (value: string, max: number) => (value.length <= max ? value : value.slice(0, max - 1) + "…");
+const TAKEOVER_RESTART_KEY = "dsh-agent-skills:takeover-restart";
+
+interface PendingTakeoverRestart {
+  boot: string;
+  baselineEnabled: boolean;
+}
+
+function readPendingRestart(): PendingTakeoverRestart | undefined {
+  try {
+    const raw = window.sessionStorage.getItem(TAKEOVER_RESTART_KEY);
+    if (raw === null) return undefined;
+    const parsed = JSON.parse(raw) as Partial<PendingTakeoverRestart>;
+    if (typeof parsed.boot === "string" && typeof parsed.baselineEnabled === "boolean") {
+      return { boot: parsed.boot, baselineEnabled: parsed.baselineEnabled };
+    }
+  } catch {
+    // Ignore unavailable storage and stale values from older plugin builds.
+  }
+  return undefined;
+}
+
+function writePendingRestart(pending: PendingTakeoverRestart | undefined): void {
+  try {
+    if (pending === undefined) window.sessionStorage.removeItem(TAKEOVER_RESTART_KEY);
+    else window.sessionStorage.setItem(TAKEOVER_RESTART_KEY, JSON.stringify(pending));
+  } catch {
+    // Private browsing/storage policy must not block the actual operation.
+  }
+}
 
 function Switch({ checked, disabled, onChange, label }: { checked: boolean; disabled?: boolean; onChange(next: boolean): void; label: string }) {
   return (
@@ -135,6 +164,7 @@ export function AgentSkillsSection({ api, t }: { api: AgentSkillsApi; t: T }) {
   const [view, setView] = useState<AgentSkillsView | undefined>(undefined);
   const [takeover, setTakeover] = useState<PresetTakeoverStatus | undefined>(undefined);
   const [takeoverRestartRequired, setTakeoverRestartRequired] = useState(false);
+  const [restarting, setRestarting] = useState(false);
   const [busy, setBusy] = useState(true);
   const [error, setError] = useState("");
   const [query, setQuery] = useState("");
@@ -181,6 +211,12 @@ export function AgentSkillsSection({ api, t }: { api: AgentSkillsApi; t: T }) {
     const result = await refresh();
     if (result.ok) {
       setTakeover(result.value);
+      const pending = readPendingRestart();
+      const stillPending = result.value.boot !== undefined
+        && pending?.boot === result.value.boot
+        && result.value.enabled !== pending.baselineEnabled;
+      setTakeoverRestartRequired(stillPending);
+      if (pending !== undefined && !stillPending) writePendingRestart(undefined);
     } else {
       setError(t("errorLoad", { message: result.error.message }));
     }
@@ -216,21 +252,90 @@ export function AgentSkillsSection({ api, t }: { api: AgentSkillsApi; t: T }) {
     }
   }, [t, updatePendingCount]);
 
-  const enableTakeover = useCallback(async () => {
+  const changeTakeover = useCallback(async (enabled: boolean) => {
     setSaving(true);
     setError("");
     try {
-      const result = await api.enableTakeover();
+      const result = enabled ? await api.enableTakeover() : await api.disableTakeover();
       if (result.ok) {
+        const pending = readPendingRestart();
+        const baselineEnabled = result.value.boot !== undefined && pending?.boot === result.value.boot
+          ? pending.baselineEnabled
+          : takeover?.enabled ?? !enabled;
+        const restartRequired = result.value.enabled !== baselineEnabled;
         setTakeover(result.value);
-        setTakeoverRestartRequired(result.value.enabled);
+        setTakeoverRestartRequired(restartRequired);
+        writePendingRestart(restartRequired && result.value.boot !== undefined
+          ? { boot: result.value.boot, baselineEnabled }
+          : undefined);
       } else {
         setError(t("errorSave", { message: result.error.message }));
       }
     } finally {
       setSaving(false);
     }
-  }, [api, t]);
+  }, [api, t, takeover?.enabled]);
+
+  const restartDsh = useCallback(async () => {
+    if (restarting) return;
+    const previousBoot = takeover?.boot;
+    setRestarting(true);
+    setError("");
+
+    const deadline = Date.now() + 60_000;
+    let sawOffline = false;
+    const retry = () => {
+      if (Date.now() > deadline) {
+        setRestarting(false);
+        setError(t("restartTimeout"));
+        return;
+      }
+      window.setTimeout(() => void poll(), 700);
+    };
+    const poll = async () => {
+      try {
+        const response = await fetch(`${window.location.origin}/?dsh-agent-skills-restart=${Date.now()}`, {
+          cache: "no-store"
+        });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      } catch {
+        sawOffline = true;
+        retry();
+        return;
+      }
+
+      if (previousBoot !== undefined) {
+        try {
+          const status = await api.takeoverStatus();
+          if (status.ok && status.value.boot !== undefined && status.value.boot !== previousBoot) {
+            window.location.reload();
+            return;
+          }
+        } catch {
+          sawOffline = true;
+          retry();
+          return;
+        }
+      }
+      if (sawOffline) {
+        window.location.reload();
+        return;
+      }
+      retry();
+    };
+
+    try {
+      const result = await api.restartDsh();
+      if (!result.ok) {
+        setRestarting(false);
+        setError(t("restartFailed", { message: result.error.message }));
+        return;
+      }
+    } catch {
+      // The host can close the transport while returning the accepted reply.
+    }
+    retry();
+  }, [api, restarting, t, takeover?.boot]);
 
   const toggleDirExpanded = (path: string) => {
     setDirExpanded((prev) => {
@@ -293,7 +398,9 @@ export function AgentSkillsSection({ api, t }: { api: AgentSkillsApi; t: T }) {
             <strong>{takeover.enabled ? t("takeoverEnabledTitle") : t("takeoverTitle")}</strong>
             <span>
               {takeoverRestartRequired
-                ? t("takeoverRestartDescription")
+                ? takeover.enabled
+                  ? t("takeoverRestartDescription")
+                  : t("takeoverDisableRestartDescription")
                 : takeover.enabled
                   ? t("takeoverEnabledDescription")
                   : takeover.available && takeover.configured > 0
@@ -303,10 +410,28 @@ export function AgentSkillsSection({ api, t }: { api: AgentSkillsApi; t: T }) {
                       : t("takeoverUnavailableDescription")}
             </span>
           </div>
-          {!takeover.enabled && takeover.available && (
-            <button type="button" className="as-btn as-btn-primary as-takeover-action" disabled={saving} onClick={() => void enableTakeover()}>
-              {t("takeoverAction")}
-            </button>
+          {takeover.available && (
+            <div className="as-takeover-actions">
+              <button
+                type="button"
+                className={takeover.enabled || takeoverRestartRequired ? "as-btn as-takeover-action" : "as-btn as-btn-primary as-takeover-action"}
+                disabled={saving || restarting}
+                onClick={() => void changeTakeover(!takeover.enabled)}
+              >
+                {takeover.enabled ? t("takeoverDisableAction") : t("takeoverAction")}
+              </button>
+              {takeoverRestartRequired && (
+                <button
+                  type="button"
+                  className="as-btn as-btn-primary as-takeover-action"
+                  disabled={saving || restarting}
+                  onClick={() => void restartDsh()}
+                >
+                  <span aria-hidden="true">↻</span>{" "}
+                  {restarting ? t("restartingDsh") : t("restartDsh")}
+                </button>
+              )}
+            </div>
           )}
         </div>
       )}

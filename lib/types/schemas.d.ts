@@ -94,8 +94,14 @@ export declare const presetTakeoverStatusSchema: z.ZodObject<{
     enabled: z.ZodBoolean;
     configured: z.ZodNumber;
     total: z.ZodNumber;
+    boot: z.ZodOptional<z.ZodString>;
 }, z.core.$strip>;
 export type PresetTakeoverStatus = z.infer<typeof presetTakeoverStatusSchema>;
+/** A restart request accepted by the host. */
+export declare const restartResultSchema: z.ZodObject<{
+    scheduled: z.ZodLiteral<true>;
+}, z.core.$strip>;
+export type RestartResult = z.infer<typeof restartResultSchema>;
 /** Input for toggling one skill. */
 export declare const toggleSkillInputSchema: z.ZodObject<{
     name: z.ZodString;

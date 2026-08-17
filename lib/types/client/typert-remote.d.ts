@@ -52,6 +52,34 @@ export declare const TYPERT_REMOTE: {
             schema: z.ZodType;
         };
     }, {
+        readonly id: "dsh-agent-skills#agentSkills/disableTakeover";
+        readonly service: "agentSkills";
+        readonly namespace: "agentSkills";
+        readonly method: "disableTakeover";
+        readonly invocation: {
+            readonly kind: "direct";
+        };
+        readonly parameters: readonly [];
+        readonly result: {
+            mode: "strict";
+            typeSymbol: string;
+            schema: z.ZodType;
+        };
+    }, {
+        readonly id: "dsh-agent-skills#agentSkills/restartDsh";
+        readonly service: "agentSkills";
+        readonly namespace: "agentSkills";
+        readonly method: "restartDsh";
+        readonly invocation: {
+            readonly kind: "direct";
+        };
+        readonly parameters: readonly [];
+        readonly result: {
+            mode: "strict";
+            typeSymbol: string;
+            schema: z.ZodType;
+        };
+    }, {
         readonly id: "dsh-agent-skills#agentSkills/toggleSkill";
         readonly service: "agentSkills";
         readonly namespace: "agentSkills";
@@ -174,6 +202,8 @@ export interface AgentSkillsApi {
     list(): Promise<RemoteResult<import("../schemas.js").AgentSkillsView>>;
     takeoverStatus(): Promise<RemoteResult<import("../schemas.js").PresetTakeoverStatus>>;
     enableTakeover(): Promise<RemoteResult<import("../schemas.js").PresetTakeoverStatus>>;
+    disableTakeover(): Promise<RemoteResult<import("../schemas.js").PresetTakeoverStatus>>;
+    restartDsh(): Promise<RemoteResult<import("../schemas.js").RestartResult>>;
     toggleSkill(input: import("../schemas.js").ToggleSkillInput): Promise<RemoteResult<import("../schemas.js").AgentSkillsView>>;
     toggleDir(input: import("../schemas.js").ToggleDirInput): Promise<RemoteResult<import("../schemas.js").AgentSkillsView>>;
     addDir(input: import("../schemas.js").AddDirInput): Promise<RemoteResult<import("../schemas.js").AgentSkillsView>>;

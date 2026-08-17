@@ -25,7 +25,7 @@
 
 通过 [DSH 插件市场](https://github.com/dsh-market/dsh-market) 安装，或打开 DSH 的「设置 → 插件市场」，搜索 **Agent Skills**，点击安装。市场会优先使用 npm 包，安装速度快，也不需要在本机重新构建。
 
-安装后继续完成下面的「开启接管 DSH 技能」步骤，再重启 DSH Web。
+安装后继续完成下面的「开启接管 DSH 技能」步骤，页面会直接提供重启按钮。
 
 ### 方式二：从 npm 安装
 
@@ -47,9 +47,11 @@ dsh plugin --profile web add github:minivv/dsh-agent-skills
 
 1. 打开 DSH 的「设置 → Agent Skills」。
 2. 点击 **开启接管 DSH 技能**。
-3. 看到“已开启”提示后重启 DSH Web。
+3. 点击页面出现的 **重启 DSH**，等待服务恢复并自动刷新页面。
 
 开启后，页面会在 `standard` 与 `code` preset 中用 `dsh-agent-skills/preset` 替换原来的 `skill-filesystem` provider，让目录和技能开关真正控制 Agent 可见的技能。它不会创建第二个 `agentSkills` host 服务；卸载脚本会恢复官方 provider。
+
+需要恢复 DSH 原来的技能来源时，点击 **取消接管**，再点击 **重启 DSH**。页面刷新后，`standard` 与 `code` preset 会重新使用官方 `@deepseek-ai/dsh-skill-filesystem` provider。
 
 如果页面无法定位 DSH 安装位置，可以使用备用命令：
 
@@ -58,7 +60,7 @@ DSH_INSTALL_ROOT="$(npm root -g)/@deepseek-ai/dsh" \
   node ~/.dsh/profiles/web/node_modules/dsh-agent-skills/scripts/install-preset.mjs
 ```
 
-执行后重启 DSH Web。DSH 升级可能覆盖内置 preset；如果页面重新显示“开启接管 DSH 技能”，点击一次即可恢复。
+执行后重启 DSH Web。DSH 升级可能覆盖内置 preset；如果页面重新显示“开启接管 DSH 技能”，点击一次并按页面提示重启即可恢复。
 
 ## 使用
 
@@ -97,7 +99,9 @@ description: Explain when this skill should be used.
 
 ## 卸载
 
-先恢复 DSH 官方的 `skill-filesystem` provider，再卸载 npm 包：
+推荐先在「设置 → Agent Skills」点击 **取消接管** 和 **重启 DSH**，再从插件市场卸载。
+
+如果设置页无法打开，也可以用命令恢复 DSH 官方的 `skill-filesystem` provider，再卸载 npm 包：
 
 ```bash
 DSH_INSTALL_ROOT="$(npm root -g)/@deepseek-ai/dsh" \

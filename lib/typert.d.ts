@@ -30,6 +30,14 @@ export declare const TYPERT: {
                 readonly kind: "method";
                 readonly signature: "(): Promise<PresetTakeoverStatus>";
             }, {
+                readonly name: "disableTakeover";
+                readonly kind: "method";
+                readonly signature: "(): Promise<PresetTakeoverStatus>";
+            }, {
+                readonly name: "restartDsh";
+                readonly kind: "method";
+                readonly signature: "(): Promise<RestartResult>";
+            }, {
                 readonly name: "toggleSkill";
                 readonly kind: "method";
                 readonly signature: "(input: ToggleSkillInput): Promise<AgentSkillsView>";
@@ -64,7 +72,10 @@ export declare const TYPERT: {
                 readonly declaration: "export interface AgentSkillsView { dirs: DirView[]; skills: SkillView[]; counts: SkillCounts; validDirs: number; missingDirs: number; }";
             }, {
                 readonly name: "PresetTakeoverStatus";
-                readonly declaration: "export interface PresetTakeoverStatus { available: boolean; enabled: boolean; configured: number; total: number; }";
+                readonly declaration: "export interface PresetTakeoverStatus { available: boolean; enabled: boolean; configured: number; total: number; boot?: string; }";
+            }, {
+                readonly name: "RestartResult";
+                readonly declaration: "export interface RestartResult { scheduled: true; }";
             }, {
                 readonly name: "ToggleSkillInput";
                 readonly declaration: "export interface ToggleSkillInput { name: string; enabled: boolean; }";
@@ -115,6 +126,34 @@ export declare const TYPERT: {
         readonly service: "agentSkills";
         readonly namespace: "agentSkills";
         readonly method: "enableTakeover";
+        readonly invocation: {
+            readonly kind: "direct";
+        };
+        readonly parameters: readonly [];
+        readonly result: {
+            mode: string;
+            typeSymbol: string;
+            schema: z.ZodType<unknown, unknown, z.core.$ZodTypeInternals<unknown, unknown>>;
+        };
+    }, {
+        readonly id: "dsh-agent-skills#agentSkills/disableTakeover";
+        readonly service: "agentSkills";
+        readonly namespace: "agentSkills";
+        readonly method: "disableTakeover";
+        readonly invocation: {
+            readonly kind: "direct";
+        };
+        readonly parameters: readonly [];
+        readonly result: {
+            mode: string;
+            typeSymbol: string;
+            schema: z.ZodType<unknown, unknown, z.core.$ZodTypeInternals<unknown, unknown>>;
+        };
+    }, {
+        readonly id: "dsh-agent-skills#agentSkills/restartDsh";
+        readonly service: "agentSkills";
+        readonly namespace: "agentSkills";
+        readonly method: "restartDsh";
         readonly invocation: {
             readonly kind: "direct";
         };
