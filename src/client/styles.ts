@@ -24,6 +24,7 @@ const CSS = `
 }
 
 .as-wrap { display: flex; flex-direction: column; gap: 14px; width: 100%; max-width: 860px; }
+.as-sticky-top { position: sticky; top: 0; z-index: 4; display: flex; flex-direction: column; gap: 14px; padding-bottom: 1px; background: var(--dsw-alias-bg-layer-1, Canvas); }
 .as-title { font-size: 20px; font-weight: 650; margin: 0; line-height: 1.3; }
 .as-subtitle { font-size: 13px; color: var(--as-muted); margin: 0; line-height: 1.5; }
 .as-search { width: 100%; box-sizing: border-box; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--as-border); background: transparent; color: inherit; font-size: 13px; outline: none; }
@@ -68,6 +69,8 @@ const CSS = `
 .as-dir-path { font-size: 13px; font-weight: 550; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; word-break: break-all; }
 .as-dir-meta { font-size: 11px; color: var(--as-muted); }
 .as-dir-actions { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+.as-dir-remove { position: relative; min-height: 24px; padding: 2px 8px; border-radius: 6px; font-size: 11px; line-height: 1.2; }
+.as-dir-remove::after { content: ""; position: absolute; inset: -7px -4px; }
 .as-tag { font-size: 11px; padding: 1px 7px; border-radius: 999px; border: 1px solid var(--as-border); color: var(--as-muted); white-space: nowrap; }
 .as-tag-custom { color: #58a6ff; border-color: rgba(88, 166, 255, 0.4); }
 .as-tag-global { color: #d29922; border-color: rgba(210, 153, 34, 0.4); }

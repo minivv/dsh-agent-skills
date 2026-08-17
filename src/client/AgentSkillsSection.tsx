@@ -123,7 +123,7 @@ function DirCard({
           {dir.auto === true && <span className="as-tag as-tag-auto">{t("autoBadge")}</span>}
           <span className="as-tag">{dir.tag === "builtin" ? t("dirTagBuiltin") : t("dirTagUser")}</span>
           {dir.kind === "custom" && (
-            <button type="button" className="as-btn as-btn-danger" onClick={onRemove} title={t("removeDir")}>
+            <button type="button" className="as-btn as-btn-danger as-dir-remove" onClick={onRemove} title={t("removeDir")}>
               {t("removeDir")}
             </button>
           )}
@@ -388,61 +388,73 @@ export function AgentSkillsSection({ api, t }: { api: AgentSkillsApi; t: T }) {
   }
   return (
     <div className="as-wrap" data-plugin="dsh-agent-skills">
-      <h2 className="as-title">{t("title")}</h2>
-      <p className="as-subtitle">{t("subtitle")}</p>
+      <div className="as-sticky-top">
+        <h2 className="as-title">{t("title")}</h2>
+        <p className="as-subtitle">{t("subtitle")}</p>
 
-      {takeover !== undefined && (
-        <div className={takeover.enabled ? "as-takeover as-takeover-enabled" : "as-takeover"}>
-          <span className="as-takeover-icon" aria-hidden="true">{takeover.enabled ? "✓" : "→"}</span>
-          <div className="as-takeover-copy">
-            <strong>{takeover.enabled ? t("takeoverEnabledTitle") : t("takeoverTitle")}</strong>
-            <span>
-              {takeoverRestartRequired
-                ? takeover.enabled
-                  ? t("takeoverRestartDescription")
-                  : t("takeoverDisableRestartDescription")
-                : takeover.enabled
-                  ? t("takeoverEnabledDescription")
-                  : takeover.available && takeover.configured > 0
-                    ? t("takeoverPartialDescription", { configured: takeover.configured, total: takeover.total })
-                    : takeover.available
-                      ? t("takeoverDescription")
-                      : t("takeoverUnavailableDescription")}
-            </span>
-          </div>
-          {takeover.available && (
-            <div className="as-takeover-actions">
-              <button
-                type="button"
-                className={takeover.enabled || takeoverRestartRequired ? "as-btn as-takeover-action" : "as-btn as-btn-primary as-takeover-action"}
-                disabled={saving || restarting}
-                onClick={() => void changeTakeover(!takeover.enabled)}
-              >
-                {takeover.enabled ? t("takeoverDisableAction") : t("takeoverAction")}
-              </button>
-              {takeoverRestartRequired && (
+        {takeover !== undefined && (
+          <div className={takeover.enabled ? "as-takeover as-takeover-enabled" : "as-takeover"}>
+            <span className="as-takeover-icon" aria-hidden="true">{takeover.enabled ? "✓" : "→"}</span>
+            <div className="as-takeover-copy">
+              <strong>{takeover.enabled ? t("takeoverEnabledTitle") : t("takeoverTitle")}</strong>
+              <span>
+                {takeoverRestartRequired
+                  ? takeover.enabled
+                    ? t("takeoverRestartDescription")
+                    : t("takeoverDisableRestartDescription")
+                  : takeover.enabled
+                    ? t("takeoverEnabledDescription")
+                    : takeover.available && takeover.configured > 0
+                      ? t("takeoverPartialDescription", { configured: takeover.configured, total: takeover.total })
+                      : takeover.available
+                        ? t("takeoverDescription")
+                        : t("takeoverUnavailableDescription")}
+              </span>
+            </div>
+            {takeover.available && (
+              <div className="as-takeover-actions">
                 <button
                   type="button"
-                  className="as-btn as-btn-primary as-takeover-action"
+                  className={takeover.enabled || takeoverRestartRequired ? "as-btn as-takeover-action" : "as-btn as-btn-primary as-takeover-action"}
                   disabled={saving || restarting}
-                  onClick={() => void restartDsh()}
+                  onClick={() => void changeTakeover(!takeover.enabled)}
                 >
-                  <span aria-hidden="true">↻</span>{" "}
-                  {restarting ? t("restartingDsh") : t("restartDsh")}
+                  {takeover.enabled ? t("takeoverDisableAction") : t("takeoverAction")}
                 </button>
-              )}
-            </div>
-          )}
-        </div>
-      )}
+                {takeoverRestartRequired && (
+                  <button
+                    type="button"
+                    className="as-btn as-btn-primary as-takeover-action"
+                    disabled={saving || restarting}
+                    onClick={() => void restartDsh()}
+                  >
+                    <span aria-hidden="true">↻</span>{" "}
+                    {restarting ? t("restartingDsh") : t("restartDsh")}
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        )}
 
-      <input
-        className="as-search"
-        type="search"
-        value={query}
-        onChange={(event) => setQuery(event.target.value)}
-        placeholder={t("searchPlaceholder")}
-      />
+        {pendingSkillCount > 0 && (
+          <div className="as-refresh-card" role="status">
+            <span className="as-refresh-icon" aria-hidden="true">↻</span>
+            <span className="as-refresh-message">{t("refreshPending", { n: pendingSkillCount })}</span>
+            <button type="button" className="as-btn as-refresh-action" onClick={() => window.location.reload()}>
+              {t("refreshPage")}
+            </button>
+          </div>
+        )}
+
+        <input
+          className="as-search"
+          type="search"
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+          placeholder={t("searchPlaceholder")}
+        />
+      </div>
 
       {error !== "" && <div className="as-error">{error}</div>}
 
@@ -568,15 +580,6 @@ export function AgentSkillsSection({ api, t }: { api: AgentSkillsApi; t: T }) {
           })}
         </span>
       </h3>
-      {pendingSkillCount > 0 && (
-        <div className="as-refresh-card" role="status">
-          <span className="as-refresh-icon" aria-hidden="true">↻</span>
-          <span className="as-refresh-message">{t("refreshPending", { n: pendingSkillCount })}</span>
-          <button type="button" className="as-btn as-refresh-action" onClick={() => window.location.reload()}>
-            {t("refreshPage")}
-          </button>
-        </div>
-      )}
       <div className="as-skill-grid">
         {filteredSkills.length === 0 ? (
           <div className="as-empty">{query.trim() === "" ? t("noSkills") : t("noMatch")}</div>
