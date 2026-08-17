@@ -4,10 +4,10 @@
  * that outranks the global layer for agent-visible skills.
  *
  * Responsibilities:
- *   - re-emit every candidate from the layers' other providers (the preset's
- *     own skill-filesystem, global providers, runtime registrations) at
- *     rank - 1, so this provider's copies win the per-name dedupe and can
- *     carry the user's enable/disable policy;
+ *   - re-emit candidates from other providers and runtime registrations with
+ *     the user's enable/disable policy;
+ *   - scan the built-in filesystem roots previously owned by the replaced
+ *     `skill-filesystem` preset row;
  *   - discover user-configured custom scan directories itself;
  *   - delegate `get()` to the original provider / file so skill bodies are
  *     always loaded by the same code that owns them.

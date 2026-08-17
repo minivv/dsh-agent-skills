@@ -49,7 +49,7 @@ dsh plugin --profile web add github:minivv/dsh-agent-skills
 2. 点击 **开启接管 DSH 技能**。
 3. 看到“已开启”提示后重启 DSH Web。
 
-开启后，页面中的目录和技能开关会接入 `standard` 与 `code` preset，真正控制 Agent 可见的技能。这个操作只添加 `dsh-agent-skills/preset` provider，不会创建第二个 `agentSkills` host 服务。
+开启后，页面会在 `standard` 与 `code` preset 中用 `dsh-agent-skills/preset` 替换原来的 `skill-filesystem` provider，让目录和技能开关真正控制 Agent 可见的技能。它不会创建第二个 `agentSkills` host 服务；卸载脚本会恢复官方 provider。
 
 如果页面无法定位 DSH 安装位置，可以使用备用命令：
 
@@ -97,7 +97,7 @@ description: Explain when this skill should be used.
 
 ## 卸载
 
-如果安装过 preset-only 行，请先清理它，再卸载 npm 包：
+先恢复 DSH 官方的 `skill-filesystem` provider，再卸载 npm 包：
 
 ```bash
 DSH_INSTALL_ROOT="$(npm root -g)/@deepseek-ai/dsh" \

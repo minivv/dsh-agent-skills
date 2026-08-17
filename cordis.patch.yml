@@ -5,8 +5,7 @@
 # which provide `loader` (base) and the web settings shell; the plugin's own
 # `inject` resolves against those.
 #
-# The per-agent PRESET row (which registers the skill provider into the
-# agent-preset layer of the skill registry) is appended by
+# The per-agent PRESET provider replaces the shipped skill-filesystem row via
 # scripts/install-preset.mjs — see README.
 - insert:
     - id: agent-skills

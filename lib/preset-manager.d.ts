@@ -9,5 +9,7 @@ export interface PresetManagerOptions {
 export declare function resolveDshPackageRoot(options?: PresetManagerOptions): string | undefined;
 /** Inspect whether every shipped standard/code preset already mounts the provider. */
 export declare function inspectPresetTakeover(options?: PresetManagerOptions): PresetTakeoverStatus;
-/** Idempotently mount the preset-only provider in every available shipped preset. */
+/** Idempotently replace the shipped filesystem provider in every supported preset. */
 export declare function enablePresetTakeover(options?: PresetManagerOptions): PresetTakeoverStatus;
+/** Restore the official filesystem provider and remove legacy appended rows. */
+export declare function disablePresetTakeover(options?: PresetManagerOptions): PresetTakeoverStatus;

@@ -8,12 +8,12 @@
  *    the `agentSkills` typert namespace for the browser half, and publishes
  *    catalog invalidations so toggles reach the model on the next agent step.
  *
- * 2. PRESET row (appended to the shipped agent presets by
+ * 2. PRESET row (replaces the shipped `skill-filesystem` provider through
  *    scripts/install-preset.mjs): registers the `agent-skills` provider into
  *    the preset layer of the skill registry, where it re-emits every
  *    candidate with the user's enable/disable policy and scans the custom
  *    directories. The preset layer outranks the global layer, which is what
- *    lets the toggles shadow the preset's own skill-filesystem provider.
+ *    makes the toggles authoritative for built-in filesystem skills.
  *
  * @module dsh-agent-skills
  */
@@ -27,8 +27,8 @@ export declare const inject: string[];
  *   - the HOST row registers into the global layer (covers host-level
  *     compositions such as the headless profile, where skill-filesystem is a
  *     host row);
- *   - a PRESET row registers into its preset layer, which outranks the
- *     global layer for agent-visible skills (the web profile's arrangement).
+ *   - the PRESET row replaces the official filesystem provider in its preset
+ *     layer, while still scanning the same built-in roots itself.
  * The host row additionally provides the settings-page service and the
  * `agentSkills` typert namespace.
  */
