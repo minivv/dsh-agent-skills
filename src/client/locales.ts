@@ -1,0 +1,88 @@
+/**
+ * `agent-skills` namespace dictionaries for the Agent Skills settings page.
+ * Simplified Chinese is the source of truth; English mirrors it.
+ *
+ * @module dsh-agent-skills/client/locales
+ */
+
+/** Simplified Chinese dictionary. */
+export const zh = {
+  nav: "Agent Skills",
+  title: "Agent Skills",
+  subtitle: "浏览、启用和管理智能体技能与来源。",
+  searchPlaceholder: "搜索技能名称或描述…",
+  sources: "来源",
+  validCount: "个有效",
+  missingCount: "个缺失",
+  addDir: "+ 添加目录",
+  rescan: "重新扫描",
+  collapseAll: "收起",
+  expandAll: "展开",
+  dirTagUser: "用户配置",
+  dirTagBuiltin: "内置路径",
+  validSkills: "{n} 个有效技能",
+  viewSkills: "查看技能",
+  hideSkills: "收起技能",
+  noSkillsInDir: "该目录下没有可用技能",
+  dirMissing: "目录不存在",
+  enabledHeader: "技能 {total} 个可用 · {custom} 个自定义 · {global} 个全局 · {builtin} 个内置",
+  noSkills: "当前没有可用的技能。点击「+ 添加目录」添加一个技能目录，或启用更多来源。",
+  noMatch: "没有匹配的技能",
+  tagCustom: "自定义",
+  tagGlobal: "全局",
+  tagBuiltin: "内置",
+  expand: "展开",
+  collapse: "收起",
+  loading: "加载中…",
+  errorLoad: "加载失败：{message}",
+  errorSave: "操作失败：{message}",
+  addDirPlaceholder: "输入技能目录的绝对路径…",
+  addConfirm: "添加",
+  addCancel: "取消",
+  removeDir: "移除",
+  autoBadge: "自动发现",
+  enabled: "已启用",
+  disabled: "已停用",
+  emptyDirs: "还没有扫描目录。可以点击「+ 添加目录」添加，或启用自动发现的其他智能体技能目录。"
+};
+
+/** English dictionary. */
+export const en = {
+  nav: "Agent Skills",
+  title: "Agent Skills",
+  subtitle: "Browse, enable, and manage agent skills and their sources.",
+  searchPlaceholder: "Search skills by name or description…",
+  sources: "Sources",
+  validCount: "valid",
+  missingCount: "missing",
+  addDir: "+ Add directory",
+  rescan: "Rescan",
+  collapseAll: "Collapse",
+  expandAll: "Expand",
+  dirTagUser: "User config",
+  dirTagBuiltin: "Builtin path",
+  validSkills: "{n} valid skills",
+  viewSkills: "View skills",
+  hideSkills: "Hide skills",
+  noSkillsInDir: "No usable skills in this directory",
+  dirMissing: "directory missing",
+  enabledHeader: "{total} skills available · {custom} custom · {global} global · {builtin} builtin",
+  noSkills: "No skills available. Click “+ Add directory” to add a skill directory, or enable more sources.",
+  noMatch: "No matching skills",
+  tagCustom: "Custom",
+  tagGlobal: "Global",
+  tagBuiltin: "Builtin",
+  expand: "Expand",
+  collapse: "Collapse",
+  loading: "Loading…",
+  errorLoad: "Failed to load: {message}",
+  errorSave: "Operation failed: {message}",
+  addDirPlaceholder: "Enter an absolute path to a skills directory…",
+  addConfirm: "Add",
+  addCancel: "Cancel",
+  removeDir: "Remove",
+  autoBadge: "auto-discovered",
+  enabled: "Enabled",
+  disabled: "Disabled",
+  emptyDirs: "No scan directories yet. Click “+ Add directory” to add one, or enable auto-discovered agent skill directories."
+};

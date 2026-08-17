@@ -1,0 +1,5 @@
+node_modules/
+.tmp/
+.DS_Store
+agent-skills-page.png
+npm-debug.log*

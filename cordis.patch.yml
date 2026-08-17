@@ -1,0 +1,13 @@
+# The dsh-agent-skills bundle patch: mounts the plugin's host half as one
+# Cordis loader row. The same row is also the browser roster row (the plugin
+# declares `dsh.client`), so the client half is discovered from it by the
+# client-modules node half. Apply this bundle after `dsh-base` + `dsh-web-app`,
+# which provide `loader` (base) and the web settings shell; the plugin's own
+# `inject` resolves against those.
+#
+# The per-agent PRESET row (which registers the skill provider into the
+# agent-preset layer of the skill registry) is appended by
+# scripts/install-preset.mjs — see README.
+- insert:
+    - id: agent-skills
+      name: dsh-agent-skills
