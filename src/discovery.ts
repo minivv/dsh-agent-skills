@@ -9,20 +9,25 @@
  */
 import { homedir } from "node:os";
 import { access } from "node:fs/promises";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 
-/** Well-known skill roots of other AI coding agents (relative to home). */
+/** Builtin skill roots exposed by the settings page (relative to home). */
 export const AGENT_SKILL_DIRS: ReadonlyArray<readonly [id: string, rel: string]> = [
+  ["agents", join(".agents", "skills")],
   ["claude", join(".claude", "skills")],
   ["codex", join(".codex", "skills")],
-  ["gemini", join(".gemini", "skills")],
-  ["cursor", join(".cursor", "skills")],
-  ["qoder", join(".qoder", "skills")],
-  ["continue", join(".continue", "skills")],
-  ["roo", join(".roo", "skills")],
-  ["cline", join(".cline", "skills")],
-  ["kilo", join(".kilo", "skills")]
+  ["opencode", join(".config", "opencode", "skills")],
+  ["gemini", join(".gemini", "skills")]
 ];
+
+/** Absolute builtin roots, honoring the configurable .agents home. */
+export function builtinAgentSkillDirs(home = homedir(), agentsHome = process.env.DSH_AGENTS_HOME): string[] {
+  return AGENT_SKILL_DIRS.map(([, rel]) =>
+    rel === join(".agents", "skills")
+      ? join(agentsHome ?? join(home, ".agents"), "skills")
+      : join(home, rel)
+  ).map((path) => resolve(path));
+}
 
 /** Whether a directory exists and is a directory. */
 export async function directoryExists(path: string): Promise<boolean> {
@@ -35,13 +40,12 @@ export async function directoryExists(path: string): Promise<boolean> {
 }
 
 /**
- * Discover agent skill directories that exist on this machine, home-expanded.
+ * Discover builtin agent skill directories that exist on this machine.
  * @returns absolute paths, existing only.
  */
 export async function discoverAgentSkillDirs(home = homedir()): Promise<string[]> {
   const found: string[] = [];
-  for (const [, rel] of AGENT_SKILL_DIRS) {
-    const path = join(home, rel);
+  for (const path of builtinAgentSkillDirs(home)) {
     if (await directoryExists(path)) found.push(path);
   }
   return found;

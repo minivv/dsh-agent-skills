@@ -15,7 +15,6 @@ import { scanRoot } from "./scan.js";
 import { resolveDshHome } from "@deepseek-ai/dsh-home-paths";
 import { resolve } from "node:path";
 import { access } from "node:fs/promises";
-import { discoverAgentSkillDirs } from "./discovery.js";
 
 /** Resolve every scan root (custom + auto + builtin) with its current policy. */
 export async function resolveRoots(
@@ -225,13 +224,20 @@ export async function buildView(ctx: Context, state: AgentSkillsState): Promise<
 /** Auto-discover other agents' skill dirs into the state (once per process). */
 export async function ensureDiscovered(state: AgentSkillsState): Promise<boolean> {
   let changed = false;
-  const existing = new Set(state.dirs.map((dir) => resolve(dir.path)));
-  const discovered = await discoverAgentSkillDirs();
-  for (const path of discovered) {
-    if (existing.has(path)) continue;
-    state.dirs.push({ path, enabled: true, auto: true });
+  const builtin = new Set((await builtinRoots()).map((root) => root.path));
+  const retained: AgentSkillsState["dirs"] = [];
+  const disabledDirs = new Set(state.disabledDirs.map((path) => resolve(path)));
+  for (const dir of state.dirs) {
+    const path = resolve(dir.path);
+    if (!builtin.has(path)) {
+      retained.push(dir);
+      continue;
+    }
+    if (dir.enabled === false) disabledDirs.add(path);
     changed = true;
   }
+  state.dirs = retained;
+  state.disabledDirs = [...disabledDirs].sort();
   return changed;
 }
 

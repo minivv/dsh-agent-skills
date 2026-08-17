@@ -24,7 +24,8 @@ export declare const zh: {
     hideSkills: string;
     noSkillsInDir: string;
     dirMissing: string;
-    enabledHeader: string;
+    enabledLabel: string;
+    enabledStats: string;
     noSkills: string;
     noMatch: string;
     tagCustom: string;
@@ -64,7 +65,8 @@ export declare const en: {
     hideSkills: string;
     noSkillsInDir: string;
     dirMissing: string;
-    enabledHeader: string;
+    enabledLabel: string;
+    enabledStats: string;
     noSkills: string;
     noMatch: string;
     tagCustom: string;

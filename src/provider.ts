@@ -23,6 +23,7 @@ import { scanRoot } from "./scan.js";
 import { resolveDshHome } from "@deepseek-ai/dsh-home-paths";
 import { watch } from "node:fs";
 import { resolve } from "node:path";
+import { builtinAgentSkillDirs } from "./discovery.js";
 
 /** The provider name this plugin registers (never "runtime"). */
 export const PROVIDER_NAME = "agent-skills";
@@ -74,9 +75,9 @@ export function rootFor(path: string | undefined, roots: RootPolicy[]): RootPoli
 export async function builtinRoots(dshHome = resolveDshHome()): Promise<RootPolicy[]> {
   const { homedir } = await import("node:os");
   const roots: RootPolicy[] = [];
-  roots.push({ path: resolve(dshHome, "skills"), disabled: false });
-  const agentsHome = process.env.DSH_AGENTS_HOME ?? resolve(homedir(), ".agents");
-  roots.push({ path: resolve(agentsHome, "skills"), disabled: false });
+  for (const path of builtinAgentSkillDirs(homedir(), process.env.DSH_AGENTS_HOME)) {
+    roots.push({ path, disabled: false });
+  }
   if (process.env.DSH_BUNDLED_SKILL_DIR !== undefined && process.env.DSH_BUNDLED_SKILL_DIR !== "") {
     roots.push({ path: resolve(process.env.DSH_BUNDLED_SKILL_DIR), disabled: false });
   }
@@ -150,14 +151,11 @@ async function builtinCandidates(
   logger: { warn(message: string): void }
 ): Promise<SkillCandidate[]> {
   const candidates: SkillCandidate[] = [];
+  const agentRoots = new Set(builtinAgentSkillDirs());
   for (const root of roots) {
     const scanned = await scanRoot(root.path, logger);
-    const source = root.path.endsWith("/skills") && root.path.includes("/.agents/")
-      ? "user-agents"
-      : root.path.endsWith("/skills") && root.path.includes("/.dsh/")
-        ? "user-dsh"
-        : "bundled";
-    const rank = source === "user-agents" ? RANK.userAgents : source === "user-dsh" ? RANK.userDsh : RANK.bundled;
+    const source = agentRoots.has(root.path) ? "user-agents" : "bundled";
+    const rank = source === "user-agents" ? RANK.userAgents : RANK.bundled;
     for (const skill of scanned.skills) {
       candidates.push(emit({
         name: skill.name,

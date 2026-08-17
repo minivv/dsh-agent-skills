@@ -69,8 +69,9 @@ const CSS = `
 .as-dir-skill-name { font-size: 13px; font-weight: 550; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
 .as-dir-skill-desc { font-size: 12px; color: var(--as-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-.as-skills-header { font-size: 13px; font-weight: 550; margin: 4px 0 0; }
-.as-skills-header .muted { font-weight: 450; color: var(--as-muted); }
+.as-skills-header { display: flex; align-items: baseline; gap: 7px; font-size: 13px; font-weight: 550; margin: 4px 0 0; text-wrap: balance; }
+.as-skills-header-title { color: var(--as-text); }
+.as-skills-header-stats { font-size: 11px; font-weight: 450; color: var(--as-muted-2); font-variant-numeric: tabular-nums; }
 .as-skill-grid { display: flex; flex-direction: column; gap: 8px; }
 .as-skill-card { border: 1px solid var(--as-border-soft); border-radius: var(--as-radius); padding: 10px 12px; display: flex; flex-direction: column; gap: 5px; }
 .as-skill-row { display: flex; align-items: center; gap: 8px; }

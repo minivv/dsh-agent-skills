@@ -10,7 +10,7 @@
 
 很多 AI 编程工具都使用 `<技能名>/SKILL.md`，但技能分散在不同目录。`dsh-agent-skills` 会自动发现这些目录，把有效技能汇总进 DSH，并提供一个可视化设置页：
 
-- 自动发现 `~/.agents/skills`、`~/.claude/skills`、`~/.codex/skills`、`~/.gemini/skills` 等常用目录。
+- 默认扫描 `~/.agents/skills`、`~/.claude/skills`、`~/.codex/skills`、`~/.config/opencode/skills` 和 `~/.gemini/skills`。
 - 支持添加任意自定义技能目录。
 - 显示每个来源是否存在、包含多少有效技能，以及技能名称和描述。
 - 可按目录或单个技能启停；变更会持久化，并在下一次 Agent step 生效。
@@ -23,22 +23,13 @@
 
 打开 DSH 的「设置 → 插件市场」，搜索 **Agent Skills**，点击安装。市场会优先使用 npm 包，安装速度快，也不需要在本机重新构建。
 
-安装后重启一次 DSH Web，再打开「设置 → Agent Skills」。
+安装后继续完成下面的「启用技能开关」步骤，再重启 DSH Web。
 
 ### 方式二：从 npm 安装
 
 ```bash
 dsh plugin --profile web add dsh-agent-skills
 ```
-
-为了让技能开关覆盖 `standard` 和 `code` Agent preset 中的 filesystem provider，还需安装一次 preset-only 行：
-
-```bash
-DSH_INSTALL_ROOT="$(npm root -g)/@deepseek-ai/dsh" \
-  node ~/.dsh/profiles/web/node_modules/dsh-agent-skills/scripts/install-preset.mjs
-```
-
-然后重启 DSH Web。这个 preset 入口只注册 scoped skill provider，不会在 Agent preset 中创建 `agentSkills` host 服务。
 
 ### 方式三：从 GitHub 安装
 
@@ -47,6 +38,17 @@ dsh plugin --profile web add github:minivv/dsh-agent-skills
 ```
 
 仓库包含 `prepare: npm run build`，因此 pnpm 会在 Git 安装时自动构建。DSH/pnpm 可能会要求你授权构建脚本；不想授权构建时请使用 npm 或插件市场版本，npm 包已经包含构建好的 `lib/`。
+
+### 启用技能开关
+
+完成任一种安装方式后，运行一次 preset 安装脚本，让技能开关覆盖 `standard` 和 `code` preset 自带的 filesystem provider：
+
+```bash
+DSH_INSTALL_ROOT="$(npm root -g)/@deepseek-ai/dsh" \
+  node ~/.dsh/profiles/web/node_modules/dsh-agent-skills/scripts/install-preset.mjs
+```
+
+然后重启 DSH Web。这个 preset 入口只注册 scoped skill provider，不会在 Agent preset 中创建 `agentSkills` host 服务。DSH 升级可能覆盖内置 preset，若开关再次失效，重新运行这条命令即可。
 
 ## 使用
 

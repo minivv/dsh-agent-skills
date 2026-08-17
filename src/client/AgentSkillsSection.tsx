@@ -41,13 +41,15 @@ function SkillDescription({ text, t }: { text: string; t: T }) {
     const element = ref.current;
     if (element === null) return;
     const check = () => {
-      setOverflow(element.scrollHeight > element.clientHeight + 1);
+      // Once expanded, keep the control visible so the user can collapse it.
+      // Re-measure after collapsing in the next effect pass.
+      if (!expanded) setOverflow(element.scrollHeight > element.clientHeight + 1);
     };
     check();
     const observer = new ResizeObserver(check);
     observer.observe(element);
     return () => observer.disconnect();
-  }, [text]);
+  }, [expanded, text]);
   if (text === "") return null;
   return (
     <div>
@@ -356,12 +358,15 @@ export function AgentSkillsSection({ api, t }: { api: AgentSkillsApi; t: T }) {
 
       {/* enabled skills */}
       <h3 className="as-skills-header">
-        {t("enabledHeader", {
-          total: view.counts.total,
-          custom: view.counts.custom,
-          global: view.counts.global,
-          builtin: view.counts.builtin
-        })}
+        <span className="as-skills-header-title">{t("enabledLabel")}</span>
+        <span className="as-skills-header-stats">
+          {t("enabledStats", {
+            total: view.counts.total,
+            custom: view.counts.custom,
+            global: view.counts.global,
+            builtin: view.counts.builtin
+          })}
+        </span>
       </h3>
       <div className="as-skill-grid">
         {filteredSkills.length === 0 ? (
