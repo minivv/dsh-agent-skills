@@ -6,6 +6,8 @@
 
 把 Claude Code、Codex、Gemini CLI、Cursor 等工具的本地 Agent Skills 接入 DeepSeek Harness，并在「设置 → Agent Skills」里统一查看、启停和管理。
 
+![Agent Skills 设置页面](https://raw.githubusercontent.com/minivv/dsh-agent-skills/main/agent-skills-page.png)
+
 ## 它解决什么问题
 
 很多 AI 编程工具都使用 `<技能名>/SKILL.md`，但技能分散在不同目录。`dsh-agent-skills` 会自动发现这些目录，把有效技能汇总进 DSH，并提供一个可视化设置页：
@@ -21,7 +23,7 @@
 
 ### 方式一：DSH 插件市场（推荐）
 
-打开 DSH 的「设置 → 插件市场」，搜索 **Agent Skills**，点击安装。市场会优先使用 npm 包，安装速度快，也不需要在本机重新构建。
+通过 [DSH 插件市场](https://github.com/dsh-market/dsh-market) 安装，或打开 DSH 的「设置 → 插件市场」，搜索 **Agent Skills**，点击安装。市场会优先使用 npm 包，安装速度快，也不需要在本机重新构建。
 
 安装后继续完成下面的「启用技能开关」步骤，再重启 DSH Web。
 
@@ -124,6 +126,7 @@ npm pack --dry-run
 
 - [GitHub](https://github.com/minivv/dsh-agent-skills)
 - [npm](https://www.npmjs.com/package/dsh-agent-skills)
+- [DSH 插件市场](https://github.com/dsh-market/dsh-market)
 - [WeiSpot 项目页](https://weispot.vercel.app/projects/dsh-agent-skills)
 
 ## License
