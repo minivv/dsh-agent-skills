@@ -24,6 +24,34 @@ export declare const TYPERT_REMOTE: {
             schema: z.ZodType;
         };
     }, {
+        readonly id: "dsh-agent-skills#agentSkills/takeoverStatus";
+        readonly service: "agentSkills";
+        readonly namespace: "agentSkills";
+        readonly method: "takeoverStatus";
+        readonly invocation: {
+            readonly kind: "direct";
+        };
+        readonly parameters: readonly [];
+        readonly result: {
+            mode: "strict";
+            typeSymbol: string;
+            schema: z.ZodType;
+        };
+    }, {
+        readonly id: "dsh-agent-skills#agentSkills/enableTakeover";
+        readonly service: "agentSkills";
+        readonly namespace: "agentSkills";
+        readonly method: "enableTakeover";
+        readonly invocation: {
+            readonly kind: "direct";
+        };
+        readonly parameters: readonly [];
+        readonly result: {
+            mode: "strict";
+            typeSymbol: string;
+            schema: z.ZodType;
+        };
+    }, {
         readonly id: "dsh-agent-skills#agentSkills/toggleSkill";
         readonly service: "agentSkills";
         readonly namespace: "agentSkills";
@@ -144,6 +172,8 @@ export type RemoteResult<T> = {
 /** The client-side `agentSkills` remote API. */
 export interface AgentSkillsApi {
     list(): Promise<RemoteResult<import("../schemas.js").AgentSkillsView>>;
+    takeoverStatus(): Promise<RemoteResult<import("../schemas.js").PresetTakeoverStatus>>;
+    enableTakeover(): Promise<RemoteResult<import("../schemas.js").PresetTakeoverStatus>>;
     toggleSkill(input: import("../schemas.js").ToggleSkillInput): Promise<RemoteResult<import("../schemas.js").AgentSkillsView>>;
     toggleDir(input: import("../schemas.js").ToggleDirInput): Promise<RemoteResult<import("../schemas.js").AgentSkillsView>>;
     addDir(input: import("../schemas.js").AddDirInput): Promise<RemoteResult<import("../schemas.js").AgentSkillsView>>;

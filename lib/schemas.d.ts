@@ -88,6 +88,14 @@ export declare const agentSkillsViewSchema: z.ZodObject<{
     missingDirs: z.ZodNumber;
 }, z.core.$strip>;
 export type AgentSkillsView = z.infer<typeof agentSkillsViewSchema>;
+/** Whether the plugin provider is mounted in DSH's shipped Agent presets. */
+export declare const presetTakeoverStatusSchema: z.ZodObject<{
+    available: z.ZodBoolean;
+    enabled: z.ZodBoolean;
+    configured: z.ZodNumber;
+    total: z.ZodNumber;
+}, z.core.$strip>;
+export type PresetTakeoverStatus = z.infer<typeof presetTakeoverStatusSchema>;
 /** Input for toggling one skill. */
 export declare const toggleSkillInputSchema: z.ZodObject<{
     name: z.ZodString;

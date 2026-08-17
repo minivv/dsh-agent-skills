@@ -22,6 +22,14 @@ export declare const TYPERT: {
                 readonly kind: "method";
                 readonly signature: "(): Promise<AgentSkillsView>";
             }, {
+                readonly name: "takeoverStatus";
+                readonly kind: "method";
+                readonly signature: "(): Promise<PresetTakeoverStatus>";
+            }, {
+                readonly name: "enableTakeover";
+                readonly kind: "method";
+                readonly signature: "(): Promise<PresetTakeoverStatus>";
+            }, {
                 readonly name: "toggleSkill";
                 readonly kind: "method";
                 readonly signature: "(input: ToggleSkillInput): Promise<AgentSkillsView>";
@@ -55,6 +63,9 @@ export declare const TYPERT: {
                 readonly name: "AgentSkillsView";
                 readonly declaration: "export interface AgentSkillsView { dirs: DirView[]; skills: SkillView[]; counts: SkillCounts; validDirs: number; missingDirs: number; }";
             }, {
+                readonly name: "PresetTakeoverStatus";
+                readonly declaration: "export interface PresetTakeoverStatus { available: boolean; enabled: boolean; configured: number; total: number; }";
+            }, {
                 readonly name: "ToggleSkillInput";
                 readonly declaration: "export interface ToggleSkillInput { name: string; enabled: boolean; }";
             }, {
@@ -76,6 +87,34 @@ export declare const TYPERT: {
         readonly service: "agentSkills";
         readonly namespace: "agentSkills";
         readonly method: "list";
+        readonly invocation: {
+            readonly kind: "direct";
+        };
+        readonly parameters: readonly [];
+        readonly result: {
+            mode: string;
+            typeSymbol: string;
+            schema: z.ZodType<unknown, unknown, z.core.$ZodTypeInternals<unknown, unknown>>;
+        };
+    }, {
+        readonly id: "dsh-agent-skills#agentSkills/takeoverStatus";
+        readonly service: "agentSkills";
+        readonly namespace: "agentSkills";
+        readonly method: "takeoverStatus";
+        readonly invocation: {
+            readonly kind: "direct";
+        };
+        readonly parameters: readonly [];
+        readonly result: {
+            mode: string;
+            typeSymbol: string;
+            schema: z.ZodType<unknown, unknown, z.core.$ZodTypeInternals<unknown, unknown>>;
+        };
+    }, {
+        readonly id: "dsh-agent-skills#agentSkills/enableTakeover";
+        readonly service: "agentSkills";
+        readonly namespace: "agentSkills";
+        readonly method: "enableTakeover";
         readonly invocation: {
             readonly kind: "direct";
         };

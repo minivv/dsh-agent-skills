@@ -10,6 +10,7 @@ import { z } from "zod";
 import {
   addDirInputSchema,
   agentSkillsViewSchema,
+  presetTakeoverStatusSchema,
   removeDirInputSchema,
   toggleDirInputSchema,
   toggleSkillInputSchema
@@ -39,6 +40,8 @@ export const TYPERT = {
         exportName: "agentSkills",
         members: [
           { name: "list", kind: "method", signature: "(): Promise<AgentSkillsView>" },
+          { name: "takeoverStatus", kind: "method", signature: "(): Promise<PresetTakeoverStatus>" },
+          { name: "enableTakeover", kind: "method", signature: "(): Promise<PresetTakeoverStatus>" },
           { name: "toggleSkill", kind: "method", signature: "(input: ToggleSkillInput): Promise<AgentSkillsView>" },
           { name: "toggleDir", kind: "method", signature: "(input: ToggleDirInput): Promise<AgentSkillsView>" },
           { name: "addDir", kind: "method", signature: "(input: AddDirInput): Promise<AgentSkillsView>" },
@@ -64,6 +67,11 @@ export const TYPERT = {
             name: "AgentSkillsView",
             declaration:
               "export interface AgentSkillsView { dirs: DirView[]; skills: SkillView[]; counts: SkillCounts; validDirs: number; missingDirs: number; }"
+          },
+          {
+            name: "PresetTakeoverStatus",
+            declaration:
+              "export interface PresetTakeoverStatus { available: boolean; enabled: boolean; configured: number; total: number; }"
           },
           {
             name: "ToggleSkillInput",
@@ -96,6 +104,24 @@ export const TYPERT = {
       invocation: direct,
       parameters: [],
       result: result("AgentSkillsView", agentSkillsViewSchema)
+    },
+    {
+      id: `${PKG}#agentSkills/takeoverStatus`,
+      service: "agentSkills",
+      namespace: "agentSkills",
+      method: "takeoverStatus",
+      invocation: direct,
+      parameters: [],
+      result: result("PresetTakeoverStatus", presetTakeoverStatusSchema)
+    },
+    {
+      id: `${PKG}#agentSkills/enableTakeover`,
+      service: "agentSkills",
+      namespace: "agentSkills",
+      method: "enableTakeover",
+      invocation: direct,
+      parameters: [],
+      result: result("PresetTakeoverStatus", presetTakeoverStatusSchema)
     },
     {
       id: `${PKG}#agentSkills/toggleSkill`,

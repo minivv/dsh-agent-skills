@@ -10,7 +10,15 @@ import { readState, writeState } from "./store.js";
 import { buildView, ensureDiscovered, canonicalizeDir } from "./views.js";
 import { invalidateSkillCache } from "./registry.js";
 import { resolveDshHome } from "@deepseek-ai/dsh-home-paths";
-import type { AgentSkillsView, AddDirInput, RemoveDirInput, ToggleDirInput, ToggleSkillInput } from "./schemas.js";
+import { enablePresetTakeover, inspectPresetTakeover } from "./preset-manager.js";
+import type {
+  AgentSkillsView,
+  AddDirInput,
+  PresetTakeoverStatus,
+  RemoveDirInput,
+  ToggleDirInput,
+  ToggleSkillInput
+} from "./schemas.js";
 
 /** Strip undefined recursively so the strict wire codec always passes. */
 function jsonSafe<T>(value: T): T {
@@ -35,6 +43,18 @@ export class AgentSkillsRuntime extends TypertRemoteService {
   @Remote
   async list(): Promise<AgentSkillsView> {
     return this.refresh();
+  }
+
+  /** Read the one-click DSH preset takeover status without exposing local paths. */
+  @Remote
+  async takeoverStatus(): Promise<PresetTakeoverStatus> {
+    return inspectPresetTakeover();
+  }
+
+  /** User-triggered, idempotent installation of the preset-scoped provider row. */
+  @Remote
+  async enableTakeover(): Promise<PresetTakeoverStatus> {
+    return enablePresetTakeover();
   }
 
   /** Enable or disable one skill by name. */

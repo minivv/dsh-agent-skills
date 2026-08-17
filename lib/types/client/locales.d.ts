@@ -9,6 +9,14 @@ export declare const zh: {
     nav: string;
     title: string;
     subtitle: string;
+    takeoverTitle: string;
+    takeoverDescription: string;
+    takeoverEnabledTitle: string;
+    takeoverEnabledDescription: string;
+    takeoverRestartDescription: string;
+    takeoverPartialDescription: string;
+    takeoverUnavailableDescription: string;
+    takeoverAction: string;
     searchPlaceholder: string;
     sources: string;
     validCount: string;
@@ -26,6 +34,8 @@ export declare const zh: {
     dirMissing: string;
     enabledLabel: string;
     enabledStats: string;
+    refreshPending: string;
+    refreshPage: string;
     noSkills: string;
     noMatch: string;
     tagCustom: string;
@@ -50,6 +60,14 @@ export declare const en: {
     nav: string;
     title: string;
     subtitle: string;
+    takeoverTitle: string;
+    takeoverDescription: string;
+    takeoverEnabledTitle: string;
+    takeoverEnabledDescription: string;
+    takeoverRestartDescription: string;
+    takeoverPartialDescription: string;
+    takeoverUnavailableDescription: string;
+    takeoverAction: string;
     searchPlaceholder: string;
     sources: string;
     validCount: string;
@@ -67,6 +85,8 @@ export declare const en: {
     dirMissing: string;
     enabledLabel: string;
     enabledStats: string;
+    refreshPending: string;
+    refreshPage: string;
     noSkills: string;
     noMatch: string;
     tagCustom: string;

@@ -70,6 +70,19 @@ export const agentSkillsViewSchema = z.object({
 });
 export type AgentSkillsView = z.infer<typeof agentSkillsViewSchema>;
 
+/** Whether the plugin provider is mounted in DSH's shipped Agent presets. */
+export const presetTakeoverStatusSchema = z.object({
+  /** Whether a verified DSH install with supported presets was found. */
+  available: z.boolean(),
+  /** Whether every available standard/code preset contains the managed row. */
+  enabled: z.boolean(),
+  /** Number of preset files that already contain the managed row. */
+  configured: z.number().int().min(0),
+  /** Number of supported preset files found in this DSH installation. */
+  total: z.number().int().min(0)
+});
+export type PresetTakeoverStatus = z.infer<typeof presetTakeoverStatusSchema>;
+
 /** Input for toggling one skill. */
 export const toggleSkillInputSchema = z.object({
   name: z.string(),

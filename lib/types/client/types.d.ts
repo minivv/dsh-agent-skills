@@ -7,7 +7,7 @@
  */
 declare module "@deepseek-ai/dsh-client-ui-slots" {
     interface LocaleNamespaceMap {
-        "agent-skills": "nav" | "title" | "subtitle" | "searchPlaceholder" | "sources" | "validCount" | "missingCount" | "addDir" | "rescan" | "collapseAll" | "expandAll" | "dirTagUser" | "dirTagBuiltin" | "validSkills" | "viewSkills" | "hideSkills" | "noSkillsInDir" | "dirMissing" | "enabledLabel" | "enabledStats" | "noSkills" | "noMatch" | "tagCustom" | "tagGlobal" | "tagBuiltin" | "expand" | "collapse" | "loading" | "errorLoad" | "errorSave" | "addDirPlaceholder" | "addConfirm" | "addCancel" | "removeDir" | "autoBadge" | "enabled" | "disabled" | "emptyDirs";
+        "agent-skills": "nav" | "title" | "subtitle" | "takeoverTitle" | "takeoverDescription" | "takeoverEnabledTitle" | "takeoverEnabledDescription" | "takeoverRestartDescription" | "takeoverPartialDescription" | "takeoverUnavailableDescription" | "takeoverAction" | "searchPlaceholder" | "sources" | "validCount" | "missingCount" | "addDir" | "rescan" | "collapseAll" | "expandAll" | "dirTagUser" | "dirTagBuiltin" | "validSkills" | "viewSkills" | "hideSkills" | "noSkillsInDir" | "dirMissing" | "enabledLabel" | "enabledStats" | "refreshPending" | "refreshPage" | "noSkills" | "noMatch" | "tagCustom" | "tagGlobal" | "tagBuiltin" | "expand" | "collapse" | "loading" | "errorLoad" | "errorSave" | "addDirPlaceholder" | "addConfirm" | "addCancel" | "removeDir" | "autoBadge" | "enabled" | "disabled" | "emptyDirs";
     }
 }
 export {};

@@ -15,7 +15,7 @@
  * @module dsh-agent-skills/client/AgentSkillsSection
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { AgentSkillsView, DirView } from "../schemas.js";
+import type { AgentSkillsView, DirView, PresetTakeoverStatus } from "../schemas.js";
 import type { AgentSkillsApi } from "./typert-remote.js";
 import type { TranslateNS } from "@deepseek-ai/dsh-client-ui-slots";
 
@@ -133,6 +133,8 @@ function DirCard({
 /** The settings page body. */
 export function AgentSkillsSection({ api, t }: { api: AgentSkillsApi; t: T }) {
   const [view, setView] = useState<AgentSkillsView | undefined>(undefined);
+  const [takeover, setTakeover] = useState<PresetTakeoverStatus | undefined>(undefined);
+  const [takeoverRestartRequired, setTakeoverRestartRequired] = useState(false);
   const [busy, setBusy] = useState(true);
   const [error, setError] = useState("");
   const [query, setQuery] = useState("");
@@ -141,13 +143,44 @@ export function AgentSkillsSection({ api, t }: { api: AgentSkillsApi; t: T }) {
   const [addDirText, setAddDirText] = useState("");
   const [dirExpanded, setDirExpanded] = useState<ReadonlySet<string>>(new Set());
   const [saving, setSaving] = useState(false);
+  const [pendingSkillCount, setPendingSkillCount] = useState(0);
+  const baselineEnabled = useRef<Map<string, boolean> | undefined>(undefined);
 
   type RefreshResult = { ok: true; value: AgentSkillsView } | { ok: false; error: { message: string } };
+  type TakeoverResult = { ok: true; value: PresetTakeoverStatus } | { ok: false; error: { message: string } };
+  const rememberBaseline = useCallback((next: AgentSkillsView) => {
+    if (baselineEnabled.current !== undefined) return;
+    baselineEnabled.current = new Map(next.skills.map((skill) => [skill.name, skill.enabled]));
+  }, []);
+  const updatePendingCount = useCallback((next: AgentSkillsView) => {
+    const baseline = baselineEnabled.current;
+    if (baseline === undefined) {
+      rememberBaseline(next);
+      setPendingSkillCount(0);
+      return;
+    }
+    let changed = 0;
+    for (const skill of next.skills) {
+      const initial = baseline.get(skill.name);
+      if (initial !== undefined && initial !== skill.enabled) changed += 1;
+    }
+    setPendingSkillCount(changed);
+  }, [rememberBaseline]);
   const load = useCallback(async (refresh: () => Promise<RefreshResult> = () => api.list()) => {
     setError("");
     const result = await refresh();
     if (result.ok) {
+      rememberBaseline(result.value);
       setView(result.value);
+    } else {
+      setError(t("errorLoad", { message: result.error.message }));
+    }
+  }, [api, rememberBaseline, t]);
+
+  const loadTakeover = useCallback(async (refresh: () => Promise<TakeoverResult> = () => api.takeoverStatus()) => {
+    const result = await refresh();
+    if (result.ok) {
+      setTakeover(result.value);
     } else {
       setError(t("errorLoad", { message: result.error.message }));
     }
@@ -155,8 +188,8 @@ export function AgentSkillsSection({ api, t }: { api: AgentSkillsApi; t: T }) {
 
   useEffect(() => {
     setBusy(true);
-    void load().finally(() => setBusy(false));
-  }, [load]);
+    void Promise.all([load(), loadTakeover()]).finally(() => setBusy(false));
+  }, [load, loadTakeover]);
 
   // Light polling keeps the page honest about changes made outside this tab
   // (skill files edited on disk, other sessions toggling sources).
@@ -167,12 +200,13 @@ export function AgentSkillsSection({ api, t }: { api: AgentSkillsApi; t: T }) {
     return () => window.clearInterval(timer);
   }, [load]);
 
-  const mutate = useCallback(async (operation: () => Promise<RefreshResult>) => {
+  const mutate = useCallback(async (operation: () => Promise<RefreshResult>, trackSkillChanges = false) => {
     setSaving(true);
     setError("");
     try {
       const result = await operation();
       if (result.ok) {
+        if (trackSkillChanges) updatePendingCount(result.value);
         setView(result.value);
       } else {
         setError(t("errorSave", { message: result.error.message }));
@@ -180,7 +214,23 @@ export function AgentSkillsSection({ api, t }: { api: AgentSkillsApi; t: T }) {
     } finally {
       setSaving(false);
     }
-  }, [t]);
+  }, [t, updatePendingCount]);
+
+  const enableTakeover = useCallback(async () => {
+    setSaving(true);
+    setError("");
+    try {
+      const result = await api.enableTakeover();
+      if (result.ok) {
+        setTakeover(result.value);
+        setTakeoverRestartRequired(result.value.enabled);
+      } else {
+        setError(t("errorSave", { message: result.error.message }));
+      }
+    } finally {
+      setSaving(false);
+    }
+  }, [api, t]);
 
   const toggleDirExpanded = (path: string) => {
     setDirExpanded((prev) => {
@@ -235,6 +285,31 @@ export function AgentSkillsSection({ api, t }: { api: AgentSkillsApi; t: T }) {
     <div className="as-wrap" data-plugin="dsh-agent-skills">
       <h2 className="as-title">{t("title")}</h2>
       <p className="as-subtitle">{t("subtitle")}</p>
+
+      {takeover !== undefined && (
+        <div className={takeover.enabled ? "as-takeover as-takeover-enabled" : "as-takeover"}>
+          <span className="as-takeover-icon" aria-hidden="true">{takeover.enabled ? "✓" : "→"}</span>
+          <div className="as-takeover-copy">
+            <strong>{takeover.enabled ? t("takeoverEnabledTitle") : t("takeoverTitle")}</strong>
+            <span>
+              {takeoverRestartRequired
+                ? t("takeoverRestartDescription")
+                : takeover.enabled
+                  ? t("takeoverEnabledDescription")
+                  : takeover.available && takeover.configured > 0
+                    ? t("takeoverPartialDescription", { configured: takeover.configured, total: takeover.total })
+                    : takeover.available
+                      ? t("takeoverDescription")
+                      : t("takeoverUnavailableDescription")}
+            </span>
+          </div>
+          {!takeover.enabled && takeover.available && (
+            <button type="button" className="as-btn as-btn-primary as-takeover-action" disabled={saving} onClick={() => void enableTakeover()}>
+              {t("takeoverAction")}
+            </button>
+          )}
+        </div>
+      )}
 
       <input
         className="as-search"
@@ -348,7 +423,7 @@ export function AgentSkillsSection({ api, t }: { api: AgentSkillsApi; t: T }) {
                 t={t}
                 expanded={dirExpanded.has(dir.path)}
                 onToggleExpanded={() => toggleDirExpanded(dir.path)}
-                onToggleEnabled={(next) => void mutate(() => api.toggleDir({ path: dir.path, enabled: next }))}
+                onToggleEnabled={(next) => void mutate(() => api.toggleDir({ path: dir.path, enabled: next }), true)}
                 onRemove={() => void mutate(() => api.removeDir({ path: dir.path }))}
               />
             ))
@@ -368,6 +443,15 @@ export function AgentSkillsSection({ api, t }: { api: AgentSkillsApi; t: T }) {
           })}
         </span>
       </h3>
+      {pendingSkillCount > 0 && (
+        <div className="as-refresh-card" role="status">
+          <span className="as-refresh-icon" aria-hidden="true">↻</span>
+          <span className="as-refresh-message">{t("refreshPending", { n: pendingSkillCount })}</span>
+          <button type="button" className="as-btn as-refresh-action" onClick={() => window.location.reload()}>
+            {t("refreshPage")}
+          </button>
+        </div>
+      )}
       <div className="as-skill-grid">
         {filteredSkills.length === 0 ? (
           <div className="as-empty">{query.trim() === "" ? t("noSkills") : t("noMatch")}</div>
@@ -386,7 +470,7 @@ export function AgentSkillsSection({ api, t }: { api: AgentSkillsApi; t: T }) {
                     <Switch
                       checked={skill.enabled}
                       disabled={saving || !skill.toggleable}
-                      onChange={(next) => void mutate(() => api.toggleSkill({ name: skill.name, enabled: next }))}
+                      onChange={(next) => void mutate(() => api.toggleSkill({ name: skill.name, enabled: next }), true)}
                       label={skill.enabled ? t("enabled") : t("disabled")}
                     />
                   </div>
