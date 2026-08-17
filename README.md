@@ -4,80 +4,52 @@
 [![license](https://img.shields.io/npm/l/dsh-agent-skills)](./LICENSE)
 [![DeepSeek Harness plugin](https://img.shields.io/badge/DSH-plugin-4f46e5)](https://github.com/deepseek-ai/deepseek-harness)
 
-把 Claude Code、Codex、Gemini CLI、Cursor 等工具的本地 Agent Skills 接入 DeepSeek Harness，并在「设置 → Agent Skills」里统一查看、启停和管理。
+在 DeepSeek Harness 的设置页中查看、启停和管理本地 Agent Skills。
 
 ![Agent Skills 设置页面](https://raw.githubusercontent.com/minivv/dsh-agent-skills/main/agent-skills-page.png)
 
-## 它解决什么问题
+## 功能
 
-很多 AI 编程工具都使用 `<技能名>/SKILL.md`，但技能分散在不同目录。`dsh-agent-skills` 会自动发现这些目录，把有效技能汇总进 DSH，并提供一个可视化设置页：
-
-- 默认扫描 `~/.agents/skills`、`~/.claude/skills`、`~/.codex/skills`、`~/.config/opencode/skills` 和 `~/.gemini/skills`。
-- 支持添加任意自定义技能目录。
-- 显示每个来源是否存在、包含多少有效技能，以及技能名称和描述。
-- 可按目录或单个技能启停；变更会持久化，页面会提示刷新后生效。
-- 监听技能文件变化，也可随时手动重新扫描。
-- 不修改原始 `SKILL.md` 文件。
+- 自动扫描 `~/.agents/skills`、`~/.claude/skills`、`~/.codex/skills`、`~/.config/opencode/skills` 和 `~/.gemini/skills`
+- 支持自定义技能目录
+- 按目录或单个技能启停
+- 搜索、查看描述并监听技能文件变化
+- 不修改原始 `SKILL.md`
 
 ## 安装
 
-### 方式一：DSH 插件市场（推荐）
-
-通过 [DSH 插件市场](https://github.com/dsh-market/dsh-market) 安装，或打开 DSH 的「设置 → 插件市场」，搜索 **Agent Skills**，点击安装。市场会优先使用 npm 包，安装速度快，也不需要在本机重新构建。
-
-安装后继续完成下面的「开启接管 DSH 技能」步骤，页面会直接提供重启按钮。
-
-### 方式二：从 npm 安装
+### npm（推荐）
 
 ```bash
 dsh plugin --profile web add dsh-agent-skills
 ```
 
-### 方式三：从 GitHub 安装
+安装后打开「设置 → Agent Skills」，点击「开启接管 DSH 技能」，再点击「重启 DSH」。
+
+### DSH 插件市场
+
+在「设置 → 插件市场」中搜索 **Agent Skills**，或查看 [DSH 插件市场](https://github.com/dsh-market/dsh-market)。
+
+### GitHub
 
 ```bash
 dsh plugin --profile web add github:minivv/dsh-agent-skills
 ```
 
-仓库包含 `prepare: npm run build`，因此 pnpm 会在 Git 安装时自动构建。DSH/pnpm 可能会要求你授权构建脚本；不想授权构建时请使用 npm 或插件市场版本，npm 包已经包含构建好的 `lib/`。
-
-### 开启接管 DSH 技能
-
-完成任一种安装方式后：
-
-1. 打开 DSH 的「设置 → Agent Skills」。
-2. 点击 **开启接管 DSH 技能**。
-3. 点击页面出现的 **重启 DSH**，等待服务恢复并自动刷新页面。
-
-开启后，页面会在 `standard` 与 `code` preset 中用 `dsh-agent-skills/preset` 替换原来的 `skill-filesystem` provider，让目录和技能开关真正控制 Agent 可见的技能。它不会创建第二个 `agentSkills` host 服务；卸载脚本会恢复官方 provider。
-
-需要恢复 DSH 原来的技能来源时，点击 **取消接管**，再点击 **重启 DSH**。页面刷新后，`standard` 与 `code` preset 会重新使用官方 `@deepseek-ai/dsh-skill-filesystem` provider。
-
-如果页面无法定位 DSH 安装位置，可以使用备用命令：
-
-```bash
-DSH_INSTALL_ROOT="$(npm root -g)/@deepseek-ai/dsh" \
-  node ~/.dsh/profiles/web/node_modules/dsh-agent-skills/scripts/install-preset.mjs
-```
-
-执行后重启 DSH Web。DSH 升级可能覆盖内置 preset；如果页面重新显示“开启接管 DSH 技能”，点击一次并按页面提示重启即可恢复。
+Git 安装可能需要授权 pnpm 执行构建脚本。
 
 ## 使用
 
-1. 打开 DSH Web。
-2. 进入「设置 → Agent Skills」。
-3. 检查自动发现的来源，或点击「+ 添加目录」。
-4. 使用来源开关或技能开关控制 Agent 可见范围。
-5. 技能区出现“n 个技能变更需刷新页面生效”后，点击「刷新页面」。
-6. 修改磁盘上的技能后，点击「重新扫描」或等待自动刷新。
+1. 在「设置 → Agent Skills」中检查自动发现的目录，或点击「+ 添加目录」。
+2. 使用目录和技能开关控制可用技能。
+3. 出现技能变更提示后，点击「刷新页面」。
+4. 修改技能文件后，点击「重新扫描」或等待自动刷新。
 
-插件状态保存在：
+点击「取消接管」并重启 DSH，可恢复 DSH 原来的技能来源。
 
-```text
-$DSH_HOME/agent-skills/state.json
-```
+设置保存在 `$DSH_HOME/agent-skills/state.json`。
 
-支持的目录结构：
+## 技能格式
 
 ```text
 skills/
@@ -86,7 +58,7 @@ skills/
 └── another-skill.md
 ```
 
-`SKILL.md` 需要 YAML frontmatter，`name` 必须使用小写 kebab-case：
+`SKILL.md` 需要 YAML frontmatter，`name` 使用小写 kebab-case：
 
 ```markdown
 ---
@@ -99,9 +71,13 @@ description: Explain when this skill should be used.
 
 ## 卸载
 
-推荐先在「设置 → Agent Skills」点击 **取消接管** 和 **重启 DSH**，再从插件市场卸载。
+先在设置页点击「取消接管」和「重启 DSH」，再运行：
 
-如果设置页无法打开，也可以用命令恢复 DSH 官方的 `skill-filesystem` provider，再卸载 npm 包：
+```bash
+dsh plugin --profile web remove dsh-agent-skills
+```
+
+如果设置页无法打开，先恢复 DSH 技能来源：
 
 ```bash
 DSH_INSTALL_ROOT="$(npm root -g)/@deepseek-ai/dsh" \
@@ -109,8 +85,6 @@ DSH_INSTALL_ROOT="$(npm root -g)/@deepseek-ai/dsh" \
 
 dsh plugin --profile web remove dsh-agent-skills
 ```
-
-最后重启 DSH Web。插件不会自动删除 `$DSH_HOME/agent-skills/state.json`，方便以后重装时保留设置。
 
 ## 开发
 
@@ -120,27 +94,21 @@ dsh plugin --profile web remove dsh-agent-skills
 npm install
 npm run typecheck
 npm run build
+npm test
 npm pack --dry-run
 ```
 
-- `src/index.ts`：host 入口，提供设置页 remote service 和全局 provider。
-- `src/preset.ts`：preset-only 入口，只注册 scoped provider。
-- `src/client/`：设置页 UI。
-- `src/scan.ts`：技能目录扫描和 frontmatter 解析。
-- `lib/`：已提交的构建产物，供 npm 和免构建安装使用。
+## 注意
 
-## 已知约束
+- 技能名必须匹配 `[a-z0-9]+(?:-[a-z0-9]+)*`
+- DSH 升级后如果开关失效，重新开启接管并重启 DSH
 
-- DSH 技能名必须匹配 `[a-z0-9]+(?:-[a-z0-9]+)*`。
-- 修改插件安装或 preset 组合后需要重启一次；目录或技能开关变更后按页面提示刷新。
-- DSH 升级可能覆盖其内置 preset 文件；如开关不再生效，在设置页重新点击「开启接管 DSH 技能」。
-
-## 相关链接
+## 链接
 
 - [GitHub](https://github.com/minivv/dsh-agent-skills)
 - [npm](https://www.npmjs.com/package/dsh-agent-skills)
 - [DSH 插件市场](https://github.com/dsh-market/dsh-market)
-- [WeiSpot 项目页](https://weispot.vercel.app/projects/dsh-agent-skills)
+- [WeiSpot](https://weispot.vercel.app/projects/dsh-agent-skills)
 
 ## License
 
