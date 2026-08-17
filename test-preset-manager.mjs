@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { mkdtempSync, mkdirSync, readFileSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { load as parseYaml } from "js-yaml";
 import {
   disablePresetTakeover,
   enablePresetTakeover,
@@ -36,6 +37,7 @@ try {
   assert.deepEqual(enabled, { available: true, enabled: true, configured: 2, total: 2 });
   const firstPass = files.map((file) => readFileSync(file, "utf8"));
   for (const text of firstPass) {
+    assert.doesNotThrow(() => parseYaml(text));
     assert.equal((text.match(/- id: skill-filesystem/g) ?? []).length, 1);
     assert.doesNotMatch(text, /- id: agent-skills/);
     assert.doesNotMatch(text, /name: ['"]?@deepseek-ai\/dsh-skill-filesystem/);
@@ -60,9 +62,10 @@ try {
   assert.deepEqual(restored, { available: true, enabled: false, configured: 0, total: 2 });
   for (const file of files) {
     const text = readFileSync(file, "utf8");
+    assert.doesNotThrow(() => parseYaml(text));
     assert.equal((text.match(/- id: skill-filesystem/g) ?? []).length, 1);
     assert.doesNotMatch(text, /- id: agent-skills/);
-    assert.match(text, /name: @deepseek-ai\/dsh-skill-filesystem/);
+    assert.match(text, /name: '@deepseek-ai\/dsh-skill-filesystem'/);
   }
 
   enablePresetTakeover({ dshRoot: scratch });

@@ -114,7 +114,8 @@ function replaceAtomically(file: string, content: string): void {
 }
 
 function replaceProvider(text: string, matcher: RegExp, provider: string): string {
-  return text.replace(matcher, `$1${provider}`);
+  const yamlScalar = provider.startsWith("@") ? `'${provider}'` : provider;
+  return text.replace(matcher, `$1${yamlScalar}`);
 }
 
 function takeoverContent(file: string, text: string): string {
