@@ -3,6 +3,7 @@
 [![npm](https://img.shields.io/npm/v/dsh-agent-skills)](https://www.npmjs.com/package/dsh-agent-skills)
 [![license](https://img.shields.io/npm/l/dsh-agent-skills)](./LICENSE)
 [![DeepSeek Harness plugin](https://img.shields.io/badge/DSH-plugin-4f46e5)](https://github.com/deepseek-ai/deepseek-harness)
+[![dsh-recommend](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fzp-home%2Fdsh-recommend%2Fmain%2Fdata%2Fbadges%2Fminivv__dsh-agent-skills.certified.json)](https://github.com/zp-home/dsh-recommend)
 
 在 DeepSeek Harness 的设置页中查看、启停和管理本地 Agent Skills。
 
