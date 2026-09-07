@@ -19,7 +19,8 @@ import { basename, dirname, join, parse } from "node:path";
 import type { PresetTakeoverStatus } from "./schemas.js";
 
 const DSH_PACKAGE = "@deepseek-ai/dsh";
-const PRESET_IDS = ["standard", "code"] as const;
+const DSH_PRESET_PACKAGE = "@deepseek-ai/dsh-agent-presets";
+const PRESET_IDS = ["standard", "code", "ptc", "cordis"] as const;
 const OFFICIAL_PROVIDER = "@deepseek-ai/dsh-skill-filesystem";
 const TAKEOVER_PROVIDER = "dsh-agent-skills/preset";
 const CURRENT_ROW = /((?:^|\n)[ \t]*- id: skill-filesystem[ \t]*\r?\n[ \t]+name:[ \t]*)['"]?dsh-agent-skills\/preset['"]?(?=\r?\n|$)/m;
@@ -34,33 +35,93 @@ export interface PresetManagerOptions {
   argvEntry?: string;
 }
 
-function verifiedPackageRoot(start: string | undefined): string | undefined {
-  if (start === undefined || start === "" || !existsSync(start)) return undefined;
-  let current: string;
+function isLegacyDshRoot(dir: string): boolean {
+  const manifest = join(dir, "package.json");
+  if (!existsSync(manifest)) return false;
   try {
-    const resolved = realpathSync(start);
-    current = statSync(resolved).isDirectory() ? resolved : dirname(resolved);
+    const pkg = JSON.parse(readFileSync(manifest, "utf8")) as { name?: unknown };
+    if (pkg.name !== DSH_PACKAGE) return false;
+    // Accept both old layout (config/agent-presets present) and new DSH package
+    // that still carries the name but whose presets moved to a sibling package.
+    // For the latter we don't return true here; preset-package walk will handle it.
+    return existsSync(join(dir, "config", "agent-presets"));
   } catch {
-    return undefined;
-  }
-
-  while (true) {
-    const manifest = join(current, "package.json");
-    if (existsSync(manifest)) {
-      try {
-        const pkg = JSON.parse(readFileSync(manifest, "utf8")) as { name?: unknown };
-        if (pkg.name === DSH_PACKAGE && existsSync(join(current, "config", "agent-presets"))) return current;
-      } catch {
-        // Keep walking; a parent package may still be the DSH package.
-      }
-    }
-    const parent = dirname(current);
-    if (parent === current || current === parse(current).root) return undefined;
-    current = parent;
+    return false;
   }
 }
 
-/** Resolve only verified @deepseek-ai/dsh package roots. */
+function isPresetPackageRoot(dir: string): boolean {
+  const manifest = join(dir, "package.json");
+  if (!existsSync(manifest)) return false;
+  try {
+    const pkg = JSON.parse(readFileSync(manifest, "utf8")) as { name?: unknown };
+    if (pkg.name !== DSH_PRESET_PACKAGE) return false;
+    return existsSync(join(dir, "presets"));
+  } catch {
+    return false;
+  }
+}
+
+function tryRealpath(path: string): string {
+  try {
+    return realpathSync(path);
+  } catch {
+    return path;
+  }
+}
+
+function walkForRoot(start: string | undefined, predicate: (dir: string) => boolean): string | undefined {
+  if (start === undefined || start === "" || !existsSync(start)) return undefined;
+  const bases: string[] = [];
+  // Keep the original symlink path for pnpm global layout; realpath is kept as fallback.
+  try {
+    const stat = statSync(start);
+    const baseDir = stat.isDirectory() ? start : dirname(start);
+    bases.push(baseDir);
+  } catch {
+    return undefined;
+  }
+  try {
+    const real = realpathSync(start);
+    const stat = statSync(real);
+    const realDir = stat.isDirectory() ? real : dirname(real);
+    if (!bases.includes(realDir)) bases.push(realDir);
+  } catch {
+    // ignore realpath failures
+  }
+
+  for (const base of bases) {
+    let current = base;
+    while (true) {
+      if (predicate(current)) return tryRealpath(current);
+
+      // Check sibling package installations at this level (pnpm / npm flat layouts).
+      const presetSibling = join(current, "node_modules", "@deepseek-ai", "dsh-agent-presets");
+      if (predicate(presetSibling)) return tryRealpath(presetSibling);
+      const pnpmPreset = join(current, "node_modules", ".pnpm", "node_modules", "@deepseek-ai", "dsh-agent-presets");
+      if (predicate(pnpmPreset)) return tryRealpath(pnpmPreset);
+      const dshSibling = join(current, "node_modules", "@deepseek-ai", "dsh");
+      if (predicate(dshSibling)) return tryRealpath(dshSibling);
+      const pnpmDsh = join(current, "node_modules", ".pnpm", "node_modules", "@deepseek-ai", "dsh");
+      if (predicate(pnpmDsh)) return tryRealpath(pnpmDsh);
+
+      const parent = dirname(current);
+      if (parent === current || current === parse(current).root) break;
+      current = parent;
+    }
+  }
+  return undefined;
+}
+
+function verifiedPackageRoot(start: string | undefined): string | undefined {
+  return walkForRoot(start, isLegacyDshRoot);
+}
+
+function verifiedPresetPackageRoot(start: string | undefined): string | undefined {
+  return walkForRoot(start, isPresetPackageRoot);
+}
+
+/** Resolve verified preset roots - legacy DSH package OR new dsh-agent-presets package. */
 export function resolveDshPackageRoot(options: PresetManagerOptions = {}): string | undefined {
   const candidates = [
     options.dshRoot,
@@ -68,15 +129,41 @@ export function resolveDshPackageRoot(options: PresetManagerOptions = {}): strin
     options.argvEntry ?? process.argv[1]
   ];
   for (const candidate of candidates) {
-    const root = verifiedPackageRoot(candidate);
-    if (root !== undefined) return root;
+    // Explicit dshRoot may itself be the preset package root.
+    if (candidate !== undefined && candidate !== "") {
+      if (isPresetPackageRoot(candidate) || isLegacyDshRoot(candidate)) return tryRealpath(candidate);
+      // Also allow direct path to a preset package's subdirectory.
+      try {
+        const stat = statSync(candidate);
+        const dir = stat.isDirectory() ? candidate : dirname(candidate);
+        if (isPresetPackageRoot(dir) || isLegacyDshRoot(dir)) return tryRealpath(dir);
+      } catch {}
+    }
+    const legacy = walkForRoot(candidate, isLegacyDshRoot);
+    if (legacy !== undefined) return legacy;
+    const preset = walkForRoot(candidate, isPresetPackageRoot);
+    if (preset !== undefined) return preset;
   }
   return undefined;
 }
 
 function presetFiles(root: string): string[] {
-  const presetRoot = join(root, "config", "agent-presets");
-  return PRESET_IDS.map((id) => join(presetRoot, id, "agent.cordis.yml")).filter((file) => existsSync(file));
+  const candidates = [
+    join(root, "config", "agent-presets"),
+    join(root, "presets")
+  ];
+  const files: string[] = [];
+  for (const presetRoot of candidates) {
+    for (const id of PRESET_IDS) {
+      const file = join(presetRoot, id, "agent.cordis.yml");
+      if (existsSync(file) && !files.includes(file)) files.push(file);
+    }
+  }
+  if (files.length === 0) return [];
+  // Preserve PRESET_IDS order for deterministic status reporting.
+  return PRESET_IDS.map((id) =>
+    files.find((f) => f.endsWith(`/${id}/agent.cordis.yml`))
+  ).filter((f): f is string => f !== undefined);
 }
 
 function statusFor(root: string | undefined): PresetTakeoverStatus {

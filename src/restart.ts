@@ -7,7 +7,7 @@
  */
 import { spawn } from "node:child_process";
 import { tmpdir } from "node:os";
-import { dirname, join, resolve } from "node:path";
+import { join, resolve } from "node:path";
 
 export interface RestartResult {
   scheduled: true;
@@ -27,7 +27,9 @@ function dshLaunch(): Launch {
     return {
       file: process.execPath,
       args: [...process.execArgv, absoluteEntry, ...process.argv.slice(2)],
-      cwd: dirname(absoluteEntry),
+      // Replay in the original working directory, not the CLI install dir:
+      // relative --patch paths and cwd-dependent plugins resolve against it.
+      cwd: process.cwd(),
       viaShell: false
     };
   }
@@ -65,6 +67,11 @@ export function scheduleDshRestart(): RestartResult {
   const stamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
   const stdout = join(tmpdir(), `dsh-agent-skills-restart-${stamp}.out.log`);
   const stderr = join(tmpdir(), `dsh-agent-skills-restart-${stamp}.err.log`);
+  // The old host needs a moment to release its ports after SIGTERM, so the
+  // helper waits before the first attempt and retries when the replacement
+  // exits during its settle window (typically EADDRINUSE from a lingering
+  // old process, which previously booted the replacement with a disabled
+  // Web UI). Worst case stays inside the client's 60s poll deadline.
   const helperCode = [
     "const { spawn } = require('node:child_process')",
     "const fs = require('node:fs')",
@@ -75,14 +82,28 @@ export function scheduleDshRestart(): RestartResult {
     `const detached = ${JSON.stringify(replacement.detached)}`,
     `const stdout = ${JSON.stringify(stdout)}`,
     `const stderr = ${JSON.stringify(stderr)}`,
-    "setTimeout(() => {",
+    "const maxAttempts = 10",
+    "const retryMs = 2500",
+    "const settleMs = 2500",
+    "const firstDelayMs = 3000",
+    "let attempt = 0",
+    "function launch() {",
+    "  attempt += 1",
     "  try {",
     "    const out = fs.openSync(stdout, 'a')",
     "    const err = fs.openSync(stderr, 'a')",
     "    const child = spawn(file, args, { cwd, detached, stdio: ['ignore', out, err], env: process.env, shell: viaShell })",
     "    child.unref()",
-    "  } catch {}",
-    "}, 1500)"
+    "    let settled = false",
+    "    child.on('exit', () => {",
+    "      if (!settled && attempt < maxAttempts) setTimeout(launch, retryMs)",
+    "    })",
+    "    setTimeout(() => { settled = true }, settleMs)",
+    "  } catch {",
+    "    if (attempt < maxAttempts) setTimeout(launch, retryMs)",
+    "  }",
+    "}",
+    "setTimeout(launch, firstDelayMs)"
   ].join("\n");
 
   const helper = spawn(process.execPath, ["-e", helperCode], {

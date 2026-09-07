@@ -164,7 +164,14 @@ export function AgentSkillsSection({ api, t }: { api: AgentSkillsApi; t: T }) {
   const [view, setView] = useState<AgentSkillsView | undefined>(undefined);
   const [takeover, setTakeover] = useState<PresetTakeoverStatus | undefined>(undefined);
   const [takeoverRestartRequired, setTakeoverRestartRequired] = useState(false);
-  const [restarting, setRestarting] = useState(false);
+  const [restarting, setRestartingState] = useState(false);
+  // Mirror of `restarting` for async callbacks: while the host is offline the
+  // background polls must stay silent instead of flashing load errors.
+  const restartingRef = useRef(false);
+  const setRestarting = useCallback((next: boolean) => {
+    restartingRef.current = next;
+    setRestartingState(next);
+  }, []);
   const [busy, setBusy] = useState(true);
   const [error, setError] = useState("");
   const [query, setQuery] = useState("");
@@ -197,18 +204,35 @@ export function AgentSkillsSection({ api, t }: { api: AgentSkillsApi; t: T }) {
     setPendingSkillCount(changed);
   }, [rememberBaseline]);
   const load = useCallback(async (refresh: () => Promise<RefreshResult> = () => api.list()) => {
+    if (restartingRef.current) return;
     setError("");
-    const result = await refresh();
+    let result: RefreshResult;
+    try {
+      result = await refresh();
+    } catch (error) {
+      // Transport down (e.g. host restarting): never surface as a load error.
+      if (restartingRef.current) return;
+      setError(t("errorLoad", { message: error instanceof Error ? error.message : String(error) }));
+      return;
+    }
     if (result.ok) {
       rememberBaseline(result.value);
       setView(result.value);
-    } else {
+    } else if (!restartingRef.current) {
       setError(t("errorLoad", { message: result.error.message }));
     }
   }, [api, rememberBaseline, t]);
 
   const loadTakeover = useCallback(async (refresh: () => Promise<TakeoverResult> = () => api.takeoverStatus()) => {
-    const result = await refresh();
+    if (restartingRef.current) return;
+    let result: TakeoverResult;
+    try {
+      result = await refresh();
+    } catch {
+      // Transport down (e.g. host restarting): stay silent, the restart poll
+      // owns the UI while `restarting` and the next tick retries otherwise.
+      return;
+    }
     if (result.ok) {
       setTakeover(result.value);
       const pending = readPendingRestart();
@@ -217,7 +241,7 @@ export function AgentSkillsSection({ api, t }: { api: AgentSkillsApi; t: T }) {
         && result.value.enabled !== pending.baselineEnabled;
       setTakeoverRestartRequired(stillPending);
       if (pending !== undefined && !stillPending) writePendingRestart(undefined);
-    } else {
+    } else if (!restartingRef.current) {
       setError(t("errorLoad", { message: result.error.message }));
     }
   }, [api, t]);
@@ -229,12 +253,15 @@ export function AgentSkillsSection({ api, t }: { api: AgentSkillsApi; t: T }) {
 
   // Light polling keeps the page honest about changes made outside this tab
   // (skill files edited on disk, other sessions toggling sources).
+  // Paused while restarting: the host is expected to be offline, and the
+  // restart poll below owns the UI until the new boot answers.
   useEffect(() => {
+    if (restarting) return;
     const timer = window.setInterval(() => {
       void load();
     }, 5000);
     return () => window.clearInterval(timer);
-  }, [load]);
+  }, [load, restarting]);
 
   const mutate = useCallback(async (operation: () => Promise<RefreshResult>, trackSkillChanges = false) => {
     setSaving(true);
@@ -335,7 +362,7 @@ export function AgentSkillsSection({ api, t }: { api: AgentSkillsApi; t: T }) {
       // The host can close the transport while returning the accepted reply.
     }
     retry();
-  }, [api, restarting, t, takeover?.boot]);
+  }, [api, restarting, setRestarting, t, takeover?.boot]);
 
   const toggleDirExpanded = (path: string) => {
     setDirExpanded((prev) => {

@@ -1,6 +1,6 @@
 {
   "name": "dsh-agent-skills",
-  "version": "0.1.7",
+  "version": "0.1.9",
   "author": "Wei <minivv@users.noreply.github.com>",
   "description": "Discover and manage Claude Code, Codex, Gemini CLI, and other Agent Skills inside DeepSeek Harness.",
   "type": "module",
@@ -116,7 +116,7 @@
     "@deepseek-ai/dsh-skill": "^0.1.0-rc.6",
     "@deepseek-ai/dsh-typert-protocol": "^0.1.0-rc.6",
     "@types/js-yaml": "^4.0.9",
-    "@types/node": "^22.0.0",
+    "@types/node": "^20.19.0",
     "@types/react": "~18.3.1",
     "@types/react-dom": "~18.3.1",
     "esbuild": "^0.25.0",

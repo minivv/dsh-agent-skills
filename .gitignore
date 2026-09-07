@@ -1,5 +1,6 @@
 node_modules/
 .tmp/
+.codegraph/
 .DS_Store
 npm-debug.log*
 PUBLISHING.local.md
