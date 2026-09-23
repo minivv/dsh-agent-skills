@@ -121,6 +121,10 @@ DSH 升级到新发布线后无需重新安装插件；只有 DSH 改 preset 文
 - [DSH 插件市场](https://github.com/dsh-market/dsh-market)
 - [WeiSpot](https://weispot.vercel.app/projects/dsh-agent-skills)
 
+## 相关插件
+
+- **[dsh-activity-bell](https://github.com/minivv/dsh-activity-bell)** —— 侧边栏活动铃铛：会话跑完后铃铛显示红色角标，点一下把工作区列表换成按天分组的最近活动列表，没看过的完成项带绿点。
+
 ## License
 
 [MIT](./LICENSE)
