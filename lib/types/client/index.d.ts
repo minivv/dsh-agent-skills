@@ -6,7 +6,7 @@
  *
  * @module dsh-agent-skills/client
  */
-import type { ClientContext } from "@deepseek-ai/dsh-client-runtime/client";
+import type { Context as ClientContext } from "@deepseek-ai/cordis";
 import "./types.js";
 /** Services required before this plugin mounts. */
 export declare const inject: string[];

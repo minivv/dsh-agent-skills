@@ -6,8 +6,14 @@
  *
  * @module dsh-agent-skills/client
  */
-import type { ClientContext } from "@deepseek-ai/dsh-client-runtime/client";
+// The browser context type is cordis' own `Context`: `dsh-client-runtime`
+// stopped shipping after 0.1.1-rc.2, and the 0.2 client packages type their
+// root context as `@deepseek-ai/cordis`.
+import type { Context as ClientContext } from "@deepseek-ai/cordis";
 import type {} from "@deepseek-ai/dsh-client-ui-slots";
+// `ctx.slots` (the SlotRegistry service merge) is declared by ui-renderer in
+// the 0.2 client packages.
+import type {} from "@deepseek-ai/dsh-client-ui-renderer/client";
 import type {} from "@deepseek-ai/dsh-client-ui-settings/client";
 import type {} from "@deepseek-ai/dsh-client-locale/client";
 import "./types.js";
