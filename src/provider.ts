@@ -24,6 +24,7 @@ import { resolveDshHome } from "@deepseek-ai/dsh-home-paths";
 import { watch } from "node:fs";
 import { resolve } from "node:path";
 import { builtinAgentSkillDirs } from "./discovery.js";
+import { comparablePath, isSameOrInside } from "./paths.js";
 
 /** The provider name this plugin registers (never "runtime"). */
 export const PROVIDER_NAME = "agent-skills";
@@ -59,14 +60,17 @@ export function stateReaderOf(): StateReader {
   };
 }
 
-/** Longest matching root wins; returns undefined when no root covers the path. */
+/**
+ * Longest matching root wins; returns undefined when no root covers the path.
+ * Comparisons normalize separators, so a Windows `C:\x\y` candidate matches
+ * the root `C:\x` (see {@link isSameOrInside}).
+ */
 export function rootFor(path: string | undefined, roots: RootPolicy[]): RootPolicy | undefined {
   if (path === undefined) return undefined;
   let best: RootPolicy | undefined;
   for (const root of roots) {
-    if (path === root.path || path.startsWith(root.path.endsWith("/") ? root.path : root.path + "/")) {
-      if (best === undefined || root.path.length > best.path.length) best = root;
-    }
+    if (!isSameOrInside(path, root.path)) continue;
+    if (best === undefined || root.path.length > best.path.length) best = root;
   }
   return best;
 }
@@ -107,18 +111,31 @@ function emit(candidate: SkillCandidate, origin: Origin, rank: number): SkillCan
   return emitted;
 }
 
-/** Custom-dir candidates (rank 300) from the current state. */
+/**
+ * Custom-dir candidates (rank 300) from the current state plus any extra
+ * directories the mounted row asked for.
+ *
+ * `extraDirs` carries the replaced preset row's own `config.customSkillDirs`:
+ * the official `skill-filesystem` row scans them, and it is this provider that
+ * inherits that job once the row is taken over. Without them a preset that
+ * ships extra skill directories (the `cordis` preset ships three) would lose
+ * those skills the moment takeover is enabled.
+ */
 async function customCandidates(
   state: AgentSkillsState,
-  logger: { warn(message: string): void }
+  logger: { warn(message: string): void },
+  extraDirs: readonly string[] = []
 ): Promise<{ candidates: SkillCandidate[]; roots: RootPolicy[] }> {
   const candidates: SkillCandidate[] = [];
   const roots: RootPolicy[] = [];
   let localOrder = 0;
-  for (const dir of state.dirs) {
-    const path = resolve(dir.path);
-    roots.push({ path, disabled: dir.enabled === false });
-    const scanned = await scanRoot(path, logger);
+  const sources: RootPolicy[] = [
+    ...state.dirs.map((dir) => ({ path: resolve(dir.path), disabled: dir.enabled === false })),
+    ...extraDirs.map((dir) => ({ path: resolve(dir), disabled: false }))
+  ];
+  for (const source of sources) {
+    roots.push(source);
+    const scanned = await scanRoot(source.path, logger);
     for (const skill of scanned.skills) {
       candidates.push(
         emit(
@@ -183,7 +200,8 @@ async function builtinCandidates(
 export function createAgentSkillsProvider(
   ctx: Context,
   control: SkillProviderControl,
-  stateReader: StateReader = stateReaderOf()
+  stateReader: StateReader = stateReaderOf(),
+  presetSkillDirs: readonly string[] = []
 ): SkillProvider {
   const logger = ctx.logger;
   const scope = scopeOf(ctx);
@@ -242,17 +260,19 @@ export function createAgentSkillsProvider(
         scope === undefined ? registry.layers.global : registry.layers.scoped.get(scope);
       void myLayer; // self is skipped by name below, layer lookup only needed for structure
       const inner = await collectAllLayers(registry, options, logger, PROVIDER_NAME);
-      const custom = await customCandidates(state, logger);
+      const custom = await customCandidates(state, logger, presetSkillDirs);
       const builtins = await builtinRoots();
       const builtin = await builtinCandidates(builtins, logger);
       const roots: RootPolicy[] = [...custom.roots, ...builtins];
 
-      const disabledDirs = new Set(state.disabledDirs);
+      // Keys are separator- and (on Windows) case-folded so the state written
+      // by the settings page matches the paths discovered here.
+      const disabledDirs = new Set(state.disabledDirs.map(comparablePath));
       const disabledSkills = new Set(state.disabledSkills);
 
       const policy: RootPolicy[] = roots.map((root) => ({
         path: root.path,
-        disabled: root.disabled || disabledDirs.has(root.path)
+        disabled: root.disabled || disabledDirs.has(comparablePath(root.path))
       }));
 
       const winners = dedupeWinners(inner.entries);

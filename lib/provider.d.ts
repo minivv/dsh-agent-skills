@@ -29,7 +29,11 @@ export interface StateReader {
     read(): Promise<AgentSkillsState>;
 }
 export declare function stateReaderOf(): StateReader;
-/** Longest matching root wins; returns undefined when no root covers the path. */
+/**
+ * Longest matching root wins; returns undefined when no root covers the path.
+ * Comparisons normalize separators, so a Windows `C:\x\y` candidate matches
+ * the root `C:\x` (see {@link isSameOrInside}).
+ */
 export declare function rootFor(path: string | undefined, roots: RootPolicy[]): RootPolicy | undefined;
 /** Builtin roots resolved from the environment (mirrors dsh-skill-filesystem). */
 export declare function builtinRoots(dshHome?: string): Promise<RootPolicy[]>;
@@ -45,7 +49,7 @@ export declare function originOf(candidate: SkillCandidate): Origin | undefined;
  * invalidate the registry cache on file changes so the catalog follows disk
  * edits without a restart.
  */
-export declare function createAgentSkillsProvider(ctx: Context, control: SkillProviderControl, stateReader?: StateReader): SkillProvider;
+export declare function createAgentSkillsProvider(ctx: Context, control: SkillProviderControl, stateReader?: StateReader, presetSkillDirs?: readonly string[]): SkillProvider;
 /** Find this plugin's provider in any scoped layer (the preset instance). */
 export declare function findPresetProvider(skills: unknown): {
     provider: SkillProvider;

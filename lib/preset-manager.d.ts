@@ -5,7 +5,11 @@ export interface PresetManagerOptions {
     /** Override the running CLI entry used for package-root discovery. */
     argvEntry?: string;
 }
-/** Resolve verified preset roots - legacy DSH package OR new dsh-agent-presets package. */
+/**
+ * Resolve the verified preset root: the legacy `@deepseek-ai/dsh` package, the
+ * retired `@deepseek-ai/dsh-agent-presets` package, or the `dsh-web-app`
+ * package that owns the presets from DSH 0.1.7-rc.2 on.
+ */
 export declare function resolveDshPackageRoot(options?: PresetManagerOptions): string | undefined;
 /** Inspect whether every shipped standard/code preset already mounts the provider. */
 export declare function inspectPresetTakeover(options?: PresetManagerOptions): PresetTakeoverStatus;
