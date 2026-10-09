@@ -119,6 +119,7 @@ npm pack --dry-run
 
 其他行为约定：
 
+- preset 包的解析始终优先「正在使用的那份」：升级 DSH 后常见的 `dsh-agent-presets` 残留即使与 `dsh-web-app` 同级共存，也不会被误选中改写；
 - Windows 与 POSIX 同等支持，路径比较统一按平台归一化后判定；
 - 接管只改写 `skill-filesystem` 行的 `name`，preset 行自带的 `config`（例如 `cordis` preset 的 `customSkillDirs`）保持原样，并且仍会被接管后的 provider 扫描；
 - 不含 `skill-filesystem` 行的 preset（如 `minimal`）不会被改动。
