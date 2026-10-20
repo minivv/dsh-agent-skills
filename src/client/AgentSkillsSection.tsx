@@ -431,14 +431,16 @@ export function AgentSkillsSection({ api, t }: { api: AgentSkillsApi; t: T }) {
                     : t("takeoverDisableRestartDescription")
                   : takeover.enabled
                     ? t("takeoverEnabledDescription")
-                    : takeover.available && takeover.configured > 0
-                      ? t("takeoverPartialDescription", { configured: takeover.configured, total: takeover.total })
-                      : takeover.available
-                        ? t("takeoverDescription")
-                        : t("takeoverUnavailableDescription")}
+                    : takeover.available
+                      ? takeover.writable === false
+                        ? t("takeoverReadOnlyDescription")
+                        : takeover.configured > 0
+                          ? t("takeoverPartialDescription", { configured: takeover.configured, total: takeover.total })
+                          : t("takeoverDescription")
+                      : t("takeoverUnavailableDescription")}
               </span>
             </div>
-            {takeover.available && (
+            {takeover.available && takeover.writable !== false && (
               <div className="as-takeover-actions">
                 <button
                   type="button"

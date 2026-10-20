@@ -91,6 +91,7 @@ export type AgentSkillsView = z.infer<typeof agentSkillsViewSchema>;
 /** Whether the plugin provider is mounted in DSH's shipped Agent presets. */
 export declare const presetTakeoverStatusSchema: z.ZodObject<{
     available: z.ZodBoolean;
+    writable: z.ZodOptional<z.ZodBoolean>;
     enabled: z.ZodBoolean;
     configured: z.ZodNumber;
     total: z.ZodNumber;

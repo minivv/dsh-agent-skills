@@ -17,6 +17,7 @@ export declare const zh: {
     takeoverDisableRestartDescription: string;
     takeoverPartialDescription: string;
     takeoverUnavailableDescription: string;
+    takeoverReadOnlyDescription: string;
     takeoverAction: string;
     takeoverDisableAction: string;
     restartDsh: string;
@@ -74,6 +75,7 @@ export declare const en: {
     takeoverDisableRestartDescription: string;
     takeoverPartialDescription: string;
     takeoverUnavailableDescription: string;
+    takeoverReadOnlyDescription: string;
     takeoverAction: string;
     takeoverDisableAction: string;
     restartDsh: string;

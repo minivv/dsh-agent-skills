@@ -81,6 +81,7 @@ try {
     assert.equal(resolveDshPackageRoot({ argvEntry: bin }), realpathSync(join(scope, "dsh-web-app")));
     assert.deepEqual(enablePresetTakeover({ argvEntry: bin }), {
       available: true,
+      writable: true,
       enabled: true,
       configured: 2,
       total: 2
@@ -104,12 +105,14 @@ try {
     assert.equal(resolveDshPackageRoot({ argvEntry: bin }), realpathSync(join(hoisted, "dsh-web-app")));
     assert.deepEqual(inspectPresetTakeover({ argvEntry: bin }), {
       available: true,
+      writable: true,
       enabled: false,
       configured: 0,
       total: 2
     });
     assert.deepEqual(enablePresetTakeover({ argvEntry: bin }), {
       available: true,
+      writable: true,
       enabled: true,
       configured: 2,
       total: 2
@@ -118,6 +121,7 @@ try {
     // Round-tripping the live owner proves the rewritten files are the loaded ones.
     assert.deepEqual(disablePresetTakeover({ argvEntry: bin }), {
       available: true,
+      writable: true,
       enabled: false,
       configured: 0,
       total: 2
@@ -138,6 +142,7 @@ try {
     assert.equal(resolveDshPackageRoot({ argvEntry: bin }), realpathSync(join(dsh, ...SCOPE, "dsh-web-app")));
     assert.deepEqual(enablePresetTakeover({ argvEntry: bin }), {
       available: true,
+      writable: true,
       enabled: true,
       configured: 2,
       total: 2
@@ -156,6 +161,7 @@ try {
     assert.equal(resolveDshPackageRoot({ argvEntry: bin }), realpathSync(join(root, ...HOISTED, "dsh-agent-presets")));
     assert.deepEqual(enablePresetTakeover({ argvEntry: bin }), {
       available: true,
+      writable: true,
       enabled: true,
       configured: 2,
       total: 2

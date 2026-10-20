@@ -54,7 +54,7 @@ export const TYPERT = {
           {
             name: "PresetTakeoverStatus",
             declaration:
-              "export interface PresetTakeoverStatus { available: boolean; enabled: boolean; configured: number; total: number; boot?: string; }"
+              "export interface PresetTakeoverStatus { available: boolean; writable?: boolean; enabled: boolean; configured: number; total: number; boot?: string; }"
           },
           {
             name: "RestartResult",
