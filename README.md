@@ -122,7 +122,8 @@ npm pack --dry-run
 - preset 包的解析始终优先「正在使用的那份」：升级 DSH 后常见的 `dsh-agent-presets` 残留即使与 `dsh-web-app` 同级共存，也不会被误选中改写；
 - Windows 与 POSIX 同等支持，路径比较统一按平台归一化后判定；
 - 接管只改写 `skill-filesystem` 行的 `name`，preset 行自带的 `config`（例如 `cordis` preset 的 `customSkillDirs`）保持原样，并且仍会被接管后的 provider 扫描；
-- 不含 `skill-filesystem` 行的 preset（如 `minimal`）不会被改动。
+- 不含 `skill-filesystem` 行的 preset（如 `minimal`）不会被改动；
+- 「接管」需要改写 DSH 安装目录中的 preset 文件。若 DSH 把运行时封装在只读归档里（例如 Electron 桌面版的 `app.asar`），设置页会直接说明当前安装不支持接管，而不是在点击后报错；这类安装请改用 npm 安装的 dsh，或等待桌面版适配。
 
 DSH 升级到新发布线后无需重新安装插件；只有 DSH 重新安装／升级覆盖 preset 文件时会丢失技能接管，重新点一次「开启接管 DSH 技能」即可。
 

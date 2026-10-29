@@ -19,6 +19,7 @@ declare module "@deepseek-ai/dsh-client-ui-slots" {
       | "takeoverDisableRestartDescription"
       | "takeoverPartialDescription"
       | "takeoverUnavailableDescription"
+      | "takeoverReadOnlyDescription"
       | "takeoverAction"
       | "takeoverDisableAction"
       | "restartDsh"

@@ -29,13 +29,14 @@ try {
   assert.equal(resolveDshPackageRoot({ argvEntry: bin }), realpathSync(scratch));
   assert.deepEqual(inspectPresetTakeover({ dshRoot: scratch }), {
     available: true,
+    writable: true,
     enabled: false,
     configured: 0,
     total: 2
   });
 
   const enabled = enablePresetTakeover({ dshRoot: scratch });
-  assert.deepEqual(enabled, { available: true, enabled: true, configured: 2, total: 2 });
+  assert.deepEqual(enabled, { available: true, writable: true, enabled: true, configured: 2, total: 2 });
   const firstPass = files.map((file) => readFileSync(file, "utf8"));
   for (const text of firstPass) {
     assert.doesNotThrow(() => parseYaml(text));
@@ -60,7 +61,7 @@ try {
   assert.match(migrated, /- id: skill-filesystem\n  name: dsh-agent-skills\/preset/);
 
   const restored = disablePresetTakeover({ dshRoot: scratch });
-  assert.deepEqual(restored, { available: true, enabled: false, configured: 0, total: 2 });
+  assert.deepEqual(restored, { available: true, writable: true, enabled: false, configured: 0, total: 2 });
   for (const file of files) {
     const text = readFileSync(file, "utf8");
     assert.doesNotThrow(() => parseYaml(text));
@@ -117,13 +118,14 @@ try {
 
     assert.deepEqual(inspectPresetTakeover({ argvEntry: bin }), {
       available: true,
+      writable: true,
       enabled: false,
       configured: 0,
       total: 3
     });
 
     const enabledNew = enablePresetTakeover({ argvEntry: bin });
-    assert.deepEqual(enabledNew, { available: true, enabled: true, configured: 3, total: 3 });
+    assert.deepEqual(enabledNew, { available: true, writable: true, enabled: true, configured: 3, total: 3 });
     for (const id of ["standard", "ptc"]) {
       const text = readFileSync(webFiles[id], "utf8");
       assert.doesNotThrow(() => parseYaml(text));
@@ -140,6 +142,7 @@ try {
     assert.equal(inspectPresetTakeover({ argvEntry: bin }).configured, 3);
     assert.deepEqual(disablePresetTakeover({ argvEntry: bin }), {
       available: true,
+      writable: true,
       enabled: false,
       configured: 0,
       total: 3
@@ -155,6 +158,7 @@ try {
   try {
     assert.deepEqual(inspectPresetTakeover({ dshRoot: invalid, argvEntry: invalid }), {
       available: false,
+      writable: false,
       enabled: false,
       configured: 0,
       total: 0
@@ -173,6 +177,57 @@ try {
     assert.throws(() => enablePresetTakeover({ dshRoot: unsupported }), /没有可接管的 skill-filesystem provider/);
   } finally {
     rmSync(unsupported, { recursive: true, force: true });
+  }
+
+  // ── read-only archive (Electron app.asar) must be detected, not written ──
+  // DSH desktop builds pack the runtime into app.asar. Reads succeed through
+  // Electron's fs shim, but the archive is a regular file on disk, so any write
+  // fails with ENOTDIR (DSH issue #5). The status must report the install as
+  // unwritable and takeover must refuse before touching any file.
+  const asarInstall = join(scratch, "DeepSeek Harness.app", "Contents", "Resources", "app.asar", "dsh");
+  try {
+    const webApp = join(asarInstall, "node_modules", "@deepseek-ai", "dsh-web-app");
+    mkdirSync(join(webApp, "presets"), { recursive: true });
+    writeFileSync(join(webApp, "package.json"), JSON.stringify({ name: "@deepseek-ai/dsh-web-app" }));
+    const archivePreset = (id) =>
+      `- insert:\n    - id: preset-${id}\n      name: '@deepseek-ai/dsh-agent-preset'\n` +
+      `      config:\n        id: ${id}\n        order: 1\n        plugins:\n` +
+      `          - id: skill-filesystem\n            name: '@deepseek-ai/dsh-skill-filesystem'\n`;
+    const archivedFiles = ["standard", "ptc"].map((id) => {
+      const file = join(webApp, "presets", `${id}.patch.yml`);
+      writeFileSync(file, archivePreset(id));
+      return file;
+    });
+    const archiveBefore = archivedFiles.map((file) => readFileSync(file, "utf8"));
+
+    assert.deepEqual(inspectPresetTakeover({ dshRoot: webApp }), {
+      available: true,
+      writable: false,
+      enabled: false,
+      configured: 0,
+      total: 2
+    });
+    assert.throws(() => enablePresetTakeover({ dshRoot: webApp }), /app\.asar|不可写/);
+    assert.deepEqual(
+      archivedFiles.map((file) => readFileSync(file, "utf8")),
+      archiveBefore,
+      "a read-only archive must stay untouched"
+    );
+
+    // An already-taken-over preset cannot be restored through a read-only path either.
+    writeFileSync(
+      archivedFiles[0],
+      archivePreset("standard").replace("@deepseek-ai/dsh-skill-filesystem", "dsh-agent-skills/preset")
+    );
+    const takenOver = readFileSync(archivedFiles[0], "utf8");
+    assert.throws(() => disablePresetTakeover({ dshRoot: webApp }), /app\.asar|不可写/);
+    assert.equal(
+      readFileSync(archivedFiles[0], "utf8"),
+      takenOver,
+      "disable must not write through a read-only archive"
+    );
+  } finally {
+    rmSync(asarInstall, { recursive: true, force: true });
   }
 
   console.log("preset manager: ok");

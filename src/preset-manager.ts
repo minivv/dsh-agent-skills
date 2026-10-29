@@ -6,6 +6,8 @@
  * @module dsh-agent-skills/preset-manager
  */
 import {
+  accessSync,
+  constants,
   existsSync,
   readFileSync,
   realpathSync,
@@ -46,6 +48,17 @@ const CURRENT_ROW = /((?:^|\n)[ \t]*- id: skill-filesystem[ \t]*\r?\n[ \t]+name:
 const OFFICIAL_ROW = /((?:^|\n)[ \t]*- id: skill-filesystem[ \t]*\r?\n[ \t]+name:[ \t]*)['"]?@deepseek-ai\/dsh-skill-filesystem['"]?(?=\r?\n|$)/m;
 const LEGACY_OVERRIDE_ROW = /((?:^|\n)[ \t]*- id: skill-filesystem[ \t]*\r?\n[ \t]+name:[ \t]*)['"]?dsh-agent-skills['"]?(?=\r?\n|$)/m;
 const LEGACY_MANAGED_BLOCK = /\n?# ── dsh-agent-skills ─+\r?\n# Registered by dsh-agent-skills:[\s\S]*?- id: agent-skills\r?\n  name: dsh-agent-skills(?:\/preset)?\r?\n?\s*$/m;
+
+/**
+ * Error text for a verified install whose presets cannot be rewritten. DSH
+ * desktop builds pack the runtime into an Electron `app.asar`: reads go through
+ * Electron's virtual fs layer, but writes reach the real filesystem, where the
+ * archive is a single regular file (ENOTDIR).
+ */
+const READ_ONLY_INSTALL_MESSAGE =
+  "当前 DSH 安装的预设文件不可写（例如桌面版把运行时封装在 app.asar 中），无法修改技能接管；请改用 npm 安装的 dsh，或等待桌面版适配";
+/** Filesystem errors that mean the preset location is not writable. */
+const READ_ONLY_ERROR_CODES = new Set(["ENOTDIR", "EROFS", "EACCES", "EPERM"]);
 
 export interface PresetManagerOptions {
   /** Explicit package root, primarily for tests and manual recovery. */
@@ -93,6 +106,43 @@ function tryRealpath(path: string): string {
   } catch {
     return path;
   }
+}
+
+/**
+ * True when `path` is inside an Electron `app.asar` archive.
+ *
+ * Electron's fs layer virtualizes reads for archive members, so read probes
+ * (`existsSync` / `statSync` / `readFileSync`) succeed even though the archive
+ * is one regular file on disk. Writes cannot be virtualized, so the archive is
+ * detected from the path shape instead of from the fs shim.
+ */
+function isAsarPath(path: string): boolean {
+  return /(?:^|\/)[^/]*\.asar(?:\/|$)/.test(comparablePath(path));
+}
+
+/** Non-mutating writability probe for the directory that would hold the temp file. */
+function isWritableDirectory(dir: string): boolean {
+  if (isAsarPath(dir)) return false;
+  try {
+    accessSync(dir, constants.W_OK);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** True when every preset file sits in a directory this process can rewrite. */
+function presetFilesWritable(files: string[]): boolean {
+  return files.length > 0 && files.every((file) => isWritableDirectory(dirname(file)));
+}
+
+/** Turn archive/read-only write failures into the actionable takeover message. */
+function readableWriteError(error: unknown): Error {
+  const code = (error as NodeJS.ErrnoException | null)?.code;
+  if (typeof code === "string" && READ_ONLY_ERROR_CODES.has(code)) {
+    return new Error(READ_ONLY_INSTALL_MESSAGE, { cause: error });
+  }
+  return error instanceof Error ? error : new Error(String(error));
 }
 
 /**
@@ -233,7 +283,7 @@ function presetFiles(root: string): string[] {
 }
 
 function statusFor(root: string | undefined): PresetTakeoverStatus {
-  if (root === undefined) return { available: false, enabled: false, configured: 0, total: 0 };
+  if (root === undefined) return { available: false, writable: false, enabled: false, configured: 0, total: 0 };
   const files = presetFiles(root);
   const configured = files.filter((file) => {
     const text = readFileSync(file, "utf8");
@@ -241,6 +291,7 @@ function statusFor(root: string | undefined): PresetTakeoverStatus {
   }).length;
   return {
     available: files.length > 0,
+    writable: presetFilesWritable(files),
     enabled: files.length > 0 && configured === files.length,
     configured,
     total: files.length
@@ -261,6 +312,8 @@ function replaceAtomically(file: string, content: string): void {
       mode: statSync(file).mode
     });
     renameSync(temporary, file);
+  } catch (error) {
+    throw readableWriteError(error);
   } finally {
     if (existsSync(temporary)) unlinkSync(temporary);
   }
@@ -306,9 +359,13 @@ export function enablePresetTakeover(options: PresetManagerOptions = {}): Preset
     return [{ file, current, next: takeoverContent(file, current) }];
   });
   if (updates.length === 0) throw new Error("当前 DSH 安装中没有可接管的 skill-filesystem provider");
-  for (const update of updates) {
-    if (update.next !== update.current) replaceAtomically(update.file, update.next);
+  const changes = updates.filter((update) => update.next !== update.current);
+  // Probe before writing: an app.asar-packaged install would otherwise fail
+  // with a raw ENOTDIR while creating the temporary file below.
+  if (changes.length > 0 && !presetFilesWritable(changes.map((update) => update.file))) {
+    throw new Error(READ_ONLY_INSTALL_MESSAGE);
   }
+  for (const change of changes) replaceAtomically(change.file, change.next);
   return statusFor(root);
 }
 
@@ -318,10 +375,14 @@ export function disablePresetTakeover(options: PresetManagerOptions = {}): Prese
   if (root === undefined) throw new Error("未找到 DSH 安装位置，请确认 DSH_INSTALL_ROOT 是否正确");
   const files = presetFiles(root);
   if (files.length === 0) throw new Error("当前 DSH 安装中没有 standard 或 code Agent 预设");
-  for (const file of files) {
+  const changes = files.flatMap((file) => {
     const current = readFileSync(file, "utf8");
     const next = restoreContent(current);
-    if (next !== current) replaceAtomically(file, next);
+    return next === current ? [] : [{ file, next }];
+  });
+  if (changes.length > 0 && !presetFilesWritable(changes.map((change) => change.file))) {
+    throw new Error(READ_ONLY_INSTALL_MESSAGE);
   }
+  for (const change of changes) replaceAtomically(change.file, change.next);
   return statusFor(root);
 }

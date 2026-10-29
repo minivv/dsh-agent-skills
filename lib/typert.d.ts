@@ -63,7 +63,7 @@ export declare const TYPERT: {
                 readonly declaration: "export interface AgentSkillsView { dirs: DirView[]; skills: SkillView[]; counts: SkillCounts; validDirs: number; missingDirs: number; }";
             }, {
                 readonly name: "PresetTakeoverStatus";
-                readonly declaration: "export interface PresetTakeoverStatus { available: boolean; enabled: boolean; configured: number; total: number; boot?: string; }";
+                readonly declaration: "export interface PresetTakeoverStatus { available: boolean; writable?: boolean; enabled: boolean; configured: number; total: number; boot?: string; }";
             }, {
                 readonly name: "RestartResult";
                 readonly declaration: "export interface RestartResult { scheduled: true; }";
